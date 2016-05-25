@@ -1,4 +1,4 @@
-#version 330
+#version 150
 
 uniform float uBrightness;
 
@@ -13,7 +13,10 @@ out vec4 oFragColor;
 void main()
 {
 	// determine frag distance to closest edge
-	float fNearest = min( min( vVertexIn.distance[0], vVertexIn.distance[1] ), vVertexIn.distance[2] );
+	float fNearest = 
+		min( min( vVertexIn.distance[0], vVertexIn.distance[1] ), 
+		vVertexIn.distance[2] );
+	
 	float fEdgeIntensity = exp2( -1.0 * fNearest * fNearest );
 
 	// blend between edge color and face color

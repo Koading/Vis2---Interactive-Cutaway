@@ -1,4 +1,4 @@
-#version 330
+#version 150
 
 uniform mat4	ciModelViewProjection;
 in vec4		ciPosition;
