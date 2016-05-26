@@ -126,6 +126,7 @@
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
       <DataExecutionPrevention />
       <IgnoreSpecificDefaultLibraries>LIBCMT;LIBCPMT</IgnoreSpecificDefaultLibraries>
+      <ShowProgress>NotSet</ShowProgress>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -183,6 +184,7 @@
       <EnableCOMDATFolding />
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
       <DataExecutionPrevention />
+      <ShowProgress>NotSet</ShowProgress>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -205,6 +207,7 @@
   <ItemGroup>
     <ClInclude Include="..\..\Cinder\samples\Geometry\vc2013\ColorPalette.h" />
     <ClInclude Include="..\..\Vis2Viewer\Visualisierung2\Vis2Viewer\vis2.h" />
+    <ClInclude Include="..\..\Vis2Viewer\Visualisierung2\Vis2Viewer\vis2enums.h" />
     <ClInclude Include="..\include\Resources.h" />
     <ClInclude Include="resource.h" />
   </ItemGroup>
