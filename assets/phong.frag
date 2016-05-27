@@ -104,12 +104,15 @@ bool cylinderCut(vec4 point, vec4 pos, vec4 uvw)
 */
 
 
-/*
+
 bool planeCut(vec4 p, vec4 pos, vec4 boxUVW)
 {
-	return (dot4(pos + (p * boxUVW)),(vec4(1)) > 0);
+	pos += p;
+	return (pos.x * boxUVW.x + pos.y * boxUVW.y + pos.z * boxUVW.z + pos.a + boxUVW.a) > 0 ;
+
+	//return (dot4(pos + (p * boxUVW)),(vec4(1)) > 0);
 }
-*/
+
 bool boxCut(vec4 p, vec4 boxPos, vec4 boxUVW)
 {
 	vec4 relPos = p - boxPos;
@@ -131,6 +134,8 @@ bool ballCut(vec4 p, vec4 ballPos, vec4 ballDims)
 
 bool cut(vec4 point, vec4 cutPos, vec4 uvw)
 {
+	if (uCutMode == 3)
+		return planeCut(point, cutPos, uvw);
 	if(uCutMode == 1)
 		return boxCut(point, cutPos, uvw);
 	else if (uCutMode == 2)
@@ -186,7 +191,10 @@ void main()
 	vec3 diffuse = vec3( phong );
 	
 	if(uTexturingMode == 0)
+	{
 		diffuse *= cDiffuse;
+		alpha = vVertexIn.color.a;
+	}
 	//checkered pattern
 	if( uTexturingMode == 1 ) {
 		diffuse *= vec3( 0.7, 0.5, 0.3 );
@@ -194,7 +202,11 @@ void main()
 	}
 	//texture
 	else if ( uTexturingMode == 2 )
-		diffuse *= texture( uTex0, vVertexIn.texCoord.st ).rgb;
+	{
+		vec4 tex = texture( uTex0, vVertexIn.texCoord.st);
+		diffuse *= tex.rgb;
+		alpha = tex.a;
+	}
 	//color = normals
 	else if ( uTexturingMode == 3 )
 		diffuse *= vVertexIn.normal.rgb;

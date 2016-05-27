@@ -102,8 +102,8 @@ void Vis2App::setupGLSL()
 void Vis2App::setupUI()
 {
 
-	vector<string> vecCutTypes = { "none", "box", "ball" };
-	vector<string> texturingModes = { "none" , "checkered", "texture", "normals" };
+	const static vector<string> vecCutTypes = { "none", "box", "ball", "plane" };
+	const static vector<string> texturingModes = { "none" , "checkered", "texture", "normals" };
 
 	int sizeX = 200;
 	int sizeY = 300;
@@ -323,6 +323,12 @@ void Vis2App::mouseDown(MouseEvent event)
 
 	}
 	*/
+	int err = gl::getError();
+	if (err != GL_NO_ERROR)
+	{
+		CI_LOG_E( gl::getErrorString(err));
+		
+	}
 }
 
 void vis2::Vis2App::mouseUp(MouseEvent event)
@@ -341,9 +347,10 @@ void Vis2App::mouseDrag(MouseEvent event)
 		mCamUi.mouseDrag(event);
 	else
 	{
-
+		CI_LOG_D("Mousedrag cursor");
 		vec3 pickedNormal;
 		if (performPicking(&mPickedPoint, &pickedNormal)) {
+			CI_LOG_D("pickpoint 2");
 			gl::ScopedColor color(Color::black());
 
 			// Draw an arrow to the picked point along its normal.
@@ -614,61 +621,11 @@ void Vis2App::draw()
 	gl::enableDepth();
 
 	gl::enableFaceCulling(mEnableFaceCulling);
-	//gl::enableBlending(true);
-	//gl::ScopedBlend(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_COLOR);
-
-	//glBlendFunc(GL_ZERO, GL_ONE_MINUS_SRC_ALPHA);
-	//glBlendFunc(GL_ZERO, GL_SRC_COLOR);
-	//glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_COLOR);
-	//glBlendEquation(GL_FUNC_ADD);
-	/*
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	*/
+	
 	gl::setMatrices(mCamera);
 
 	//gl::clear(Color(.20f, .20f, .20f));
 	gl::clear(Color(mBackgroundColor));
-
-
-	if (mPhongShader)
-	{
-		//test for simple uvw parameter space
-		mPhongShader->uniform("uSpaceParams",
-			vec4(mSpaceParamU, mSpaceParamV, mSpaceParamW, 1.0f));
-
-		//mPhongShader->uniform("uSpacePos", mSpacePos);
-		mPhongShader->uniform("uSpacePos", vec4(mSpaceX, mSpaceY, mSpaceZ, 1.0));
-		mPhongShader->uniform("uCutAlpha", mCutAlpha);
-		
-		mPhongShader->uniform("uTexturingMode", (int)mTextureType);
-		
-		mPhongShader->uniform("uFreq", ivec2(80));
-		mPhongShader->uniform("uBackfaceCulling", mEnableFaceCulling);
-		mPhongShader->uniform("uCutMode", (int)mCutType);
-
-
-
-		/*
-		
-		uniform int			uNumCuts;
-		uniform booleanCut	uCutArray[10];
-		uniform sampler2D	uTex0;
-		uniform int			uTexturingMode;
-		uniform ivec2       uFreq;
-		uniform int			uLightAll;
-		uniform vec4		uSpaceParams;
-		uniform vec4		uSpacePos;
-		uniform float		uCutAlpha;
-		uniform bool		uBackfaceCulling;
-
-
-		uniform int			uNumCuts;
-		uniform booleanCut	uCutArray[10];
-		uniform vec4		uSpaceParams;
-
-		*/
-	}
 
 	if (this->mShowGrid && this->mGridLoop)
 		mGridLoop->draw();
@@ -701,6 +658,49 @@ void Vis2App::draw()
 	//glBlendFunc(GL_DST_ALPHA, GL_ONE_MINUS_DST_ALPHA);
 	//glBlendEquation(GL_MAX);
 
+
+	if (mPhongShader)
+	{
+
+
+		/*
+
+		uniform int			uNumCuts;
+		uniform booleanCut	uCutArray[10];
+		uniform sampler2D	uTex0;
+		uniform int			uTexturingMode;
+		uniform ivec2       uFreq;
+		uniform int			uLightAll;
+		uniform vec4		uSpaceParams;
+		uniform vec4		uSpacePos;
+		uniform float		uCutAlpha;
+		uniform bool		uBackfaceCulling;
+
+
+		uniform int			uNumCuts;
+		uniform booleanCut	uCutArray[10];
+		uniform vec4		uSpaceParams;
+
+		*/
+
+		//test for simple uvw parameter space
+		mPhongShader->uniform("uSpaceParams",
+			vec4(mSpaceParamU, mSpaceParamV, mSpaceParamW, 1.0f));
+
+		//mPhongShader->uniform("uSpacePos", mSpacePos);
+		mPhongShader->uniform("uSpacePos", vec4(mSpaceX, mSpaceY, mSpaceZ, 1.0));
+		mPhongShader->uniform("uCutAlpha", mCutAlpha);
+
+		mPhongShader->uniform("uTexturingMode", (int)mTextureType);
+
+		mPhongShader->uniform("uFreq", ivec2(80));
+		mPhongShader->uniform("uBackfaceCulling", mEnableFaceCulling);
+		mPhongShader->uniform("uCutMode", (int)mCutType);
+
+
+
+	}
+
 	if (mObjectBatch)
 		mObjectBatch->draw();
 
@@ -727,9 +727,10 @@ void Vis2App::draw()
 	//Picking to select center of cut
 	if (mEnableSelect) 
 	{
-		CI_LOG_E("debug: pickpoint");
+		
 		vec3 pickedNormal;
 		if (performPicking(&mPickedPoint, &pickedNormal)) {
+			
 			gl::ScopedColor color(Color::white());
 			
 			// Draw an arrow to the picked point along its normal.
@@ -836,7 +837,7 @@ CINDER_APP(Vis2App, RendererGl , [&](App::Settings *settings) {
 	for (string s : args)
 	{
 		std::cout << s << std::endl;
-		CI_LOG_E(s);
+		CI_LOG_D(s);
 	}
 
 });
