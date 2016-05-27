@@ -9,7 +9,11 @@ struct booleanCut
 };
 
 uniform int			uNumCuts;
-uniform booleanCut	uCutArray[10];
+//uniform booleanCut	uCutArray[5];
+uniform vec3		uCutCenter[5];
+uniform vec3		uCutUVW[5];
+uniform int			uCutType[5];
+
 uniform sampler2D	uTex0;
 uniform int			uTexturingMode;
 uniform ivec2       uFreq;
@@ -99,6 +103,13 @@ bool cylinderCut(vec4 point, vec4 pos, vec4 uvw)
 }
 */
 
+
+/*
+bool planeCut(vec4 p, vec4 pos, vec4 boxUVW)
+{
+	return (dot4(pos + (p * boxUVW)),(vec4(1)) > 0);
+}
+*/
 bool boxCut(vec4 p, vec4 boxPos, vec4 boxUVW)
 {
 	vec4 relPos = p - boxPos;
@@ -129,6 +140,16 @@ bool cut(vec4 point, vec4 cutPos, vec4 uvw)
 
 void main()
 {
+
+	float alpha = 1.0;
+	if( cut(vVertexIn.realPosition, uSpacePos, uSpaceParams ))
+	{
+		if(uCutAlpha == 0.0f)
+			discard;
+		else
+			alpha = uCutAlpha;
+	}
+
 	// set diffuse and specular colors
 	vec3 cDiffuse = vVertexIn.color.rgb;
 	vec3 cSpecular = vec3( 0.3 );
@@ -162,41 +183,31 @@ void main()
 	const float kNormalization = ( kMaterialShininess + 8.0 ) / ( 3.14159265 * 8.0 );
 	float blinn = pow( max( dot( N, H ), 0.0 ), kMaterialShininess ) * kNormalization;
 
-	// diffuse coefficient
 	vec3 diffuse = vec3( phong );
-
+	
+	if(uTexturingMode == 0)
+		diffuse *= cDiffuse;
+	//checkered pattern
 	if( uTexturingMode == 1 ) {
 		diffuse *= vec3( 0.7, 0.5, 0.3 );
 		diffuse *= 0.5 + 0.5 * checkered( vVertexIn.texCoord, uFreq );
 	}
+	//texture
 	else if ( uTexturingMode == 2 )
 		diffuse *= texture( uTex0, vVertexIn.texCoord.st ).rgb;
+	//color = normals
 	else if ( uTexturingMode == 3 )
 		diffuse *= vVertexIn.normal.rgb;
-		
+	
 
-	// specular coefficient
+
+
 	vec3 specular = blinn * cSpecular;
 	
 	vec3 finalColor = diffuse + specular;
+		
+	oFragColor = vec4( finalColor, alpha );
 	
-	if(cut(vVertexIn.realPosition, 
-		uSpacePos, 
-		uSpaceParams ))
-	{
-		//apply transparency according to cut transparent
-		//oFragColor = vec4( finalColor, uCutAlpha);
-		if(uCutAlpha > 0.0f)
-			oFragColor = vec4( finalColor, uCutAlpha);
-		else 
-			//better than zero transparency, doesn't solve janky alpha blending
-			discard;
-	}
-	else
-	{
-		//solid
-		oFragColor = vec4( finalColor, 1.0f );
-	}
 
 	
 	// alpha

@@ -6,13 +6,13 @@ uniform mat3	ciNormalMatrix;
 
 struct booleanCut
 {
-	vec3 center;
-	vec3 uvw;
-	int type;
+	vec3	center;
+	vec3	uvw;
+	int		type;
 };
 
 uniform int			uNumCuts;
-uniform booleanCut	uCutArray[10];
+//uniform booleanCut	uCutArray[10];
 uniform vec4		uSpaceParams;
 
 in vec4		ciPosition;
@@ -27,31 +27,6 @@ out VertexData {
 	vec4 color;
 	vec2 texCoord;
 } vVertexOut;
-
-
-bool testCut(vec4 p)
-{
-	return (p.x < 1.0 
-		&& p.y < 1.0 
-		&& p.z < 0.0 );
-}
-
-bool boxCut(vec4 p, vec4 boxPos, vec4 boxUVW)
-{
-	return(p.x < (boxPos.x + boxUVW.x)
-		&& p.y < (boxPos.y + boxUVW.y)
-		&& p.z < (boxPos.z + boxUVW.z)
-	);
-}
-
-bool ballCut(vec4 p, vec4 ballPos, vec4 ballDims)
-{
-	
-	vec4 relPos = p - ballPos;
-
-	return length(relPos) < length(ballDims);
-		
-}
 
 void main()
 {

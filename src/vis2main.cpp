@@ -8,14 +8,14 @@ using namespace vis2;
 using namespace gl;
 
 Vis2App::Vis2App() :
-	mNumGridCells(15),
+	mNumGridCells(20),
 	mEnablePlaneCut(false),
-	mSpaceParamU(1.0f),
-	mSpaceParamV(1.0f),
-	mSpaceParamW(1.0f),
-	mSpaceX(1.0f),
-	mSpaceY(1.0f),
-	mSpaceZ(1.0f),
+	mSpaceParamU(0.0f),
+	mSpaceParamV(0.0f),
+	mSpaceParamW(0.0f),
+	mSpaceX(0.0f),
+	mSpaceY(0.0f),
+	mSpaceZ(0.0f),
 	mMousePos(vec2(0.0f, 0.0f)),
 	mEnableSelect(false),
 	mBackgroundColor(0.1f, 0.1f, 0.1f),
@@ -26,6 +26,7 @@ Vis2App::Vis2App() :
 	mCutAlpha(0.25),
 	//mModelFile(".//..//assets//8lbs.obj"),
 	mModelFile(".//..//assets//house.obj"),
+	mModelMtl(".//..//assets//house.mtl"),
 	mJsonFile(mModelFile + ".json"),
 	mPickedPoint(vec3(0.0f, 0.0f, 0.0f)),
 	mTextureType(TexType::CHECKERED),
@@ -44,7 +45,6 @@ void Vis2App::setup()
 	createGridLoop();
 
 	//camera setup
-
 	mCamera.lookAt(normalize(vec3(60, 60, 120)) * 100.0f, mCameraTarget); 
 	mCamUi = CameraUi(&mCamera);
 
@@ -85,14 +85,16 @@ void Vis2App::setupGLSL()
 	try {
 		mWireShader = gl::GlslProg::create(
 			loadFile(".//..//assets//wireframe.vert"),
-			loadFile(".//..//assets//wireframe.geom"),
-			loadFile(".//..//assets//wireframe.frag")
+			loadFile(".//..//assets//wireframe.frag"), 
+			loadFile(".//..//assets//wireframe.geom")
 			);
 
 	}
 	catch (cinder::Exception &ex)
 	{
 		CI_LOG_E("error loading shader: " << ex.what());
+		mWireShader = (gl::context()->getStockShader(gl::ShaderDef().color()));
+		
 	}
 
 }
@@ -198,17 +200,35 @@ void Vis2App::resize()
 }
 
 
-
-
 void Vis2App::update()
 {
+
+}
+
+
+void Vis2App::resetCam()
+{
+	mCameraLerpTarget = normalize(vec3(60, 60, 120)) * 100.0f;
+	//mCamera.lookAt(normalize(vec3(60, 60, 120)) * 100.0f, mCameraTarget);
+	
 	// After creating a new primitive, gradually move the camera to get a good view.
-	if (false) {
+	{
 		float distance = glm::distance(mCamera.getEyePoint(), mCameraLerpTarget);
 		vec3 eye = mCameraLerpTarget - lerp(distance, 5.0f, 0.25f) * mCameraViewDirection;
 		mCameraTarget = lerp(mCameraTarget, mCameraLerpTarget, 0.25f);
 		mCamera.lookAt(eye, mCameraTarget);
 	}
+
+	mCamUi = CameraUi(&mCamera);
+
+}
+
+void Vis2App::moveCameraPosLinear(CameraPersp newCam)
+{
+	float distance = glm::distance(mCamera.getEyePoint(), newCam.getViewDirection());
+	vec3 eye = newCam.getViewDirection() - lerp(distance, 5.0f, 0.25f) * mCameraViewDirection;
+	mCameraTarget = lerp(mCameraTarget, newCam.getViewDirection(), 0.25f);
+	mCamera.lookAt(eye, mCameraTarget);
 }
 
 void Vis2App::keyDown(KeyEvent event)
@@ -219,6 +239,15 @@ void Vis2App::keyDown(KeyEvent event)
 	case KeyEvent::KEY_c:
 		this->enableSelect();
 		break;
+	case KeyEvent::KEY_d:
+		this->mSpaceParamU = 1.0f;
+		this->mSpaceParamV = 1.0f;
+		this->mSpaceParamW = 1.0f;
+		break;
+	case KeyEvent::KEY_r:
+		//resetCam();
+		break;
+
 		//possibly move camera
 	case KeyEvent::KEY_DOWN:
 		
@@ -256,7 +285,7 @@ void Vis2App::mouseDown(MouseEvent event)
 		this->mSpaceY = mPickedPoint.y;
 		this->mSpaceZ = mPickedPoint.z;
 
-		mEnableSelect = false;
+		//mEnableSelect = false;
 	}
 
 	/*
@@ -296,6 +325,11 @@ void Vis2App::mouseDown(MouseEvent event)
 	*/
 }
 
+void vis2::Vis2App::mouseUp(MouseEvent event)
+{
+	mEnableSelect = false;
+}
+
 void Vis2App::mouseWheel(MouseEvent event)
 {
 	mCamUi.mouseWheel(event);
@@ -305,6 +339,25 @@ void Vis2App::mouseDrag(MouseEvent event)
 {
 	if(!mEnableSelect)
 		mCamUi.mouseDrag(event);
+	else
+	{
+
+		vec3 pickedNormal;
+		if (performPicking(&mPickedPoint, &pickedNormal)) {
+			gl::ScopedColor color(Color::black());
+
+			// Draw an arrow to the picked point along its normal.
+			gl::ScopedGlslProg shader(gl::getStockShader(gl::ShaderDef().color().lambert()));
+			gl::drawVector(mPickedPoint + pickedNormal, mPickedPoint);
+		}
+
+		this->mSpaceParamU = abs(mPickedPoint.x - this->mSpaceX);
+		this->mSpaceParamV = abs(mPickedPoint.y - this->mSpaceY);
+		this->mSpaceParamW = abs(mPickedPoint.z - this->mSpaceZ);
+
+
+	}
+
 }
 
 void Vis2App::loadObj(const DataSourceRef &dataSource, const DataSourceRef &dataSourceMtl)
@@ -330,15 +383,14 @@ void Vis2App::loadObj(const DataSourceRef &dataSource, const DataSourceRef &data
 		loader = & ObjLoader(dataSource);
 	*/
 
-	ObjLoader loader(dataSource);
+	ObjLoader loader(dataSource, dataSourceMtl);
 
 	//need trimesh for bounding box functionality
 	
 	mCurrentTriMesh = TriMesh::create(loader);
 	mCurrentVboMesh = VboMesh::create(loader);
-
 	
-
+	
 	/*
 	mCurrentTriMesh = TriMesh::create(*(loader));
 	mCurrentVboMesh = VboMesh::create(*(loader));
@@ -524,7 +576,7 @@ void vis2::Vis2App::loadModel()
 	//string_type ext = file.extension();
 
 	//string mtlFile = mModelFile.substr(0, mModelFile.size() - ext) + ".mtl";
-	loadObj(loadFile(mModelFile), loadFile(mModelFile));
+	loadObj(loadFile(mModelFile), loadFile(mModelMtl));
 	//loadObj(loadFile(mModelFile), loadFile(mtlFile));
 	//loadJson();
 }
@@ -588,9 +640,9 @@ void Vis2App::draw()
 		//mPhongShader->uniform("uSpacePos", mSpacePos);
 		mPhongShader->uniform("uSpacePos", vec4(mSpaceX, mSpaceY, mSpaceZ, 1.0));
 		mPhongShader->uniform("uCutAlpha", mCutAlpha);
-		//1=checkered
-		//2=dark
+		
 		mPhongShader->uniform("uTexturingMode", (int)mTextureType);
+		
 		mPhongShader->uniform("uFreq", ivec2(80));
 		mPhongShader->uniform("uBackfaceCulling", mEnableFaceCulling);
 		mPhongShader->uniform("uCutMode", (int)mCutType);
@@ -675,6 +727,7 @@ void Vis2App::draw()
 	//Picking to select center of cut
 	if (mEnableSelect) 
 	{
+		CI_LOG_E("debug: pickpoint");
 		vec3 pickedNormal;
 		if (performPicking(&mPickedPoint, &pickedNormal)) {
 			gl::ScopedColor color(Color::white());

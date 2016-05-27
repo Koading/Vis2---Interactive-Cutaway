@@ -16,30 +16,27 @@
     <Filter Include="Source Files\shaders">
       <UniqueIdentifier>{d6470604-0f76-4ede-8517-1a618089ac34}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\src">
+      <UniqueIdentifier>{cd5ad075-4213-422a-b45a-796b9e207362}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\include\Resources.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClCompile Include="..\..\Cinder\samples\Geometry\vc2013\vis2toolset.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClInclude Include="resource.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Vis2Viewer\Visualisierung2\Vis2Viewer\vis2enums.h">
-      <Filter>Source Files</Filter>
+    <ClInclude Include="..\include\vis2.h">
+      <Filter>Source Files\src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\vis2enums.h">
+      <Filter>Source Files\src</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\include\Resources.h">
       <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Vis2Viewer\Visualisierung2\Vis2Viewer\vis2.h">
-      <Filter>Source Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Cinder\samples\Geometry\vc2013\ColorPalette.h">
-      <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -70,8 +67,8 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\Vis2Viewer\Visualisierung2\Vis2Viewer\vis2main.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="..\src\vis2main.cpp">
+      <Filter>Source Files\src</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

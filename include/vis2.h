@@ -48,6 +48,8 @@
 
 #include "vis2enums.h"
 
+
+
 using namespace boost::filesystem;
 using namespace ci;
 using namespace ci::app;
@@ -73,6 +75,8 @@ namespace vis2 {
 
 
 		void mouseDown(MouseEvent event) override;
+		void mouseUp(MouseEvent event) override;
+
 		void mouseDrag(MouseEvent event) override;
 		void mouseWheel(MouseEvent event) override;
 		void keyDown(KeyEvent event) override;
@@ -202,6 +206,7 @@ namespace vis2 {
 		void buttonLoadModel();
 		
 		std::string mModelFile;
+		std::string mModelMtl;
 		std::string mJsonFile;
 
 		void saveToJson();
@@ -219,6 +224,9 @@ namespace vis2 {
 		cutType mCutType;
 		
 		void saveCurrentCutAndView();
+
+		void resetCam();
+		void moveCameraPosLinear(CameraPersp newCam);
 	};
 }
 
