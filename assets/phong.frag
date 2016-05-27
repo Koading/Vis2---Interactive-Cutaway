@@ -199,16 +199,11 @@ void main()
 	else if ( uTexturingMode == 3 )
 		diffuse *= vVertexIn.normal.rgb;
 	
-
-
-
 	vec3 specular = blinn * cSpecular;
 	
 	vec3 finalColor = diffuse + specular;
 		
 	oFragColor = vec4( finalColor, alpha );
-	
-
 	
 	// alpha
 	//float alpha = ( uTexturingMode == 3 ) ? 0.75 : 1.0;
