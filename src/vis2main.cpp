@@ -7,33 +7,38 @@ using namespace std;
 using namespace vis2;
 using namespace gl;
 
-Vis2App::Vis2App() :
+Vis2App::Vis2App() : 
+	mCurrentShader(nullptr),                 
+	mCutLabel("default"),
+	mCutSelection(0),
+	cutsLabelList({}),
+	cutsList({}), 
+	mShaderSetting(),                 
 	mNumGridCells(20),
 	mEnablePlaneCut(false),
+	mPlaneCutParams(vec4(0.0f, 0.0f, 1.0f, 0.0f)),
+	mPickedPoint(vec3(0.0f, 0.0f, 0.0f)),
 	mSpaceParamU(0.0f),
 	mSpaceParamV(0.0f),
 	mSpaceParamW(0.0f),
 	mSpaceX(0.0f),
 	mSpaceY(0.0f),
 	mSpaceZ(0.0f),
-	mMousePos(vec2(0.0f, 0.0f)),
-	mEnableSelect(false),
-	mBackgroundColor(0.1f, 0.1f, 0.1f),
-	mPlaneCutParams(vec4(0.0f, 0.0f, 1.0f, 0.0f)),
-	mEnableFaceCulling(true),
-	mShowGrid(true),
 	mSpacePos(vec4(0.0, 0.0, 0.0, 1.0)),
 	mCutAlpha(0.25),
 	//mModelFile(".//..//assets//8lbs.obj"),
+	mEnableSelect(false),
+	mMousePos(vec2(0.0f, 0.0f)),
+	mBackgroundColor(0.1f, 0.1f, 0.1f),
+	mEnableFaceCulling(true),
+	mShowGrid(true),
 	mModelFile(".//..//assets//house.obj"),
-	mModelMtl(".//..//assets//house.mtl"),
-	mJsonFile(mModelFile + ".json"),
-	mPickedPoint(vec3(0.0f, 0.0f, 0.0f)),
+	mModelMtl(".//..//assets//house.mtl"), mJsonFile(mModelFile + ".json"),
 	mTextureType(TexType::CHECKERED),
 	mCutType(cutType::BOX),
-	mCutLabel("default"),
-	cutsLabelList({}),
-	cutsList({})
+	mMouseDown(false),
+	mFont(Font("Arial", 12.0f)),
+	mFps("0.0")
 {
 	
 }
@@ -99,93 +104,6 @@ void Vis2App::setupGLSL()
 
 }
 
-void Vis2App::setupUI()
-{
-
-	const static vector<string> vecCutTypes = { "none", "box", "ball", "plane" };
-	const static vector<string> texturingModes = { "none" , "checkered", "texture", "normals" };
-
-	int sizeX = 200;
-	int sizeY = 300;
-
-	int stdMargin = 20;
-	int offsetXLeft = stdMargin;
-	int offsetYTop = stdMargin;
-
-	int offsetXRight = getWindowSize().x - sizeX - stdMargin;
-
-	//mCameraSettings = params::InterfaceGl::create(getWindow(), "Camera", toPixels(ivec2(200, 200)));	
-
-	mCutSettings = params::InterfaceGl::create(getWindow(), "Cut Settings", 
-		toPixels(ivec2(sizeX, sizeY)));
-
-	//mCutSettings->addParam("EnablePlaneCut", &mEnablePlaneCut);
-	mCutSettings->addSeparator();
-	//mCutSettings->addParam("Plane Params", &(mPlaneCutParams.x));
-
-	mCutSettings->addParam("Cut Mode", vecCutTypes, (int*)&mCutType);
-
-	mCutSettings->addParam("U", &mSpaceParamU).min(0.0f).step(0.1f);
-	mCutSettings->addParam("V", &mSpaceParamV).min(0.0f).step(0.1f);
-	mCutSettings->addParam("W", &mSpaceParamW).min(0.0f).step(0.1f);
-
-	mCutSettings->addParam("PosX", &mSpaceX).step(0.1f);
-	mCutSettings->addParam("PosY", &mSpaceY).step(0.1f);
-	mCutSettings->addParam("PosZ", &mSpaceZ).step(0.1f);
-
-	mCutSettings->addParam("uCutAlpha", &mCutAlpha).min(0.0f).max(1.0f).step(0.05f);
-
-	mCutSettings->addSeparator();
-
-	mCutSettings->addParam("Selection", &mEnableSelect, true);
-	
-	mCutSettings->addButton("Select cut", 
-		std::bind(&Vis2App::enableSelect, this)
-		);
-	
-	mOptions = params::InterfaceGl::create(getWindow(), "General Options", 
-		toPixels(ivec2(sizeX, sizeY)));
-	mOptions->addParam("Face Culling", 
-		&mEnableFaceCulling).
-		updateFn([this] { gl::enableFaceCulling(mEnableFaceCulling); });
-
-
-	mOptions->addSeparator();
-	mOptions->addParam("Draw Grid", &mShowGrid);
-	
-	mOptions->setPosition(vec2(stdMargin, stdMargin));
-	//mOptions->addParam("")
-		
-		
-	mOptions->addParam("Texturing Mode", texturingModes, (int*)&mTextureType);
-
-	mOptions->addButton("Open File",
-		std::bind(&Vis2App::selectObjFileDialog, this)
-		);
-
-	mRigs = params::InterfaceGl::create(getWindow(), "Rigs", 
-		toPixels(ivec2(sizeX, sizeY)));
-
-	mRigs->addParam("LabelName", &mCutLabel);
-	//mRigs->addParam("Rig", cutsLabelList, &mCutSelection);
-	mRigs->addButton("Safe Cut", std::bind(&Vis2App::createCut, this));
-	setupLabelList();
-	mRigs->addButton("Load Cut", std::bind(&Vis2App::loadCut, this));
-	mCutSettings->setPosition(vec2(offsetXRight, offsetYTop));
-	mRigs->setPosition(
-		vec2(mCutSettings->getPosition().x,
-			mCutSettings->getPosition().y + mCutSettings->getHeight() + offsetYTop
-
-			));
-
-
-
-}
-
-void vis2::Vis2App::setupLabelList()
-{
-	mRigs->addParam("Rig", cutsLabelList, &mCutSelection);
-}
 
 
 
@@ -231,189 +149,7 @@ void Vis2App::moveCameraPosLinear(CameraPersp newCam)
 	mCamera.lookAt(eye, mCameraTarget);
 }
 
-void Vis2App::keyDown(KeyEvent event)
-{
 
-	switch (event.getCode())
-	{
-	case KeyEvent::KEY_c:
-		this->enableSelect();
-		break;
-	case KeyEvent::KEY_d:
-		this->mSpaceParamU = 1.0f;
-		this->mSpaceParamV = 1.0f;
-		this->mSpaceParamW = 1.0f;
-		break;
-	case KeyEvent::KEY_r:
-		//resetCam();
-		break;
-
-		//possibly move camera
-	case KeyEvent::KEY_DOWN:
-		
-		break;
-	case KeyEvent::KEY_UP:
-
-		break;
-	case KeyEvent::KEY_LEFT:
-
-		break;
-	case KeyEvent::KEY_RIGHT:
-
-		break;
-	case KeyEvent::KEY_ESCAPE:
-		this->quit();
-	default:
-		break;
-
-	}
-}
-
-void Vis2App::mouseMove(MouseEvent event)
-{
-	this->mMousePos = event.getPos();
-}
-
-void Vis2App::mouseDown(MouseEvent event)
-{
-
-	if(!mEnableSelect)
-		mCamUi.mouseDown(event);
-	else
-	{
-		this->mSpaceX = mPickedPoint.x;
-		this->mSpaceY = mPickedPoint.y;
-		this->mSpaceZ = mPickedPoint.z;
-
-		//mEnableSelect = false;
-	}
-
-	/*
-	auto ray = mCamera.generateRay(event.getPos(), getWindowSize());
-
-	ray.calcPlaneIntersection();
-	*/
-
-	//automates mouse control:
-	//mousedown enables moving camera along a ball
-	
-	//sort for alpha blending
-	
-	
-	/*
-	if (!mVecVertBatchRef.empty())
-	{
-		std::sort(mVecVertBatchRef.begin(), mVecBatchRef.end()
-			, [](const VertBatchRef &lhs, const VertBatchRef &rhs)
-		{
-			return lhs.get()->
-		}
-
-		for (gl::VertBatchRef element : mVecVertBatchRef)
-		{
-			element->draw();
-		}
-
-		// something like this
-		vector<ObjectType> objects;
-		std::sort(objects.begin(), objects.end(), 
-			[](const ObjectType &lhs, const ObjectType &rhs) 
-		{ return lhs.z < rhs.z; });
-		
-
-	}
-	*/
-	int err = gl::getError();
-	if (err != GL_NO_ERROR)
-	{
-		CI_LOG_E( gl::getErrorString(err));
-		
-	}
-}
-
-void vis2::Vis2App::mouseUp(MouseEvent event)
-{
-	mEnableSelect = false;
-}
-
-void Vis2App::mouseWheel(MouseEvent event)
-{
-	mCamUi.mouseWheel(event);
-}
-
-void Vis2App::mouseDrag(MouseEvent event)
-{
-	if(!mEnableSelect)
-		mCamUi.mouseDrag(event);
-	else
-	{
-		CI_LOG_D("Mousedrag cursor");
-		vec3 pickedNormal;
-		if (performPicking(&mPickedPoint, &pickedNormal)) {
-			CI_LOG_D("pickpoint 2");
-			gl::ScopedColor color(Color::black());
-
-			// Draw an arrow to the picked point along its normal.
-			gl::ScopedGlslProg shader(gl::getStockShader(gl::ShaderDef().color().lambert()));
-			gl::drawVector(mPickedPoint + pickedNormal, mPickedPoint);
-		}
-
-		this->mSpaceParamU = abs(mPickedPoint.x - this->mSpaceX);
-		this->mSpaceParamV = abs(mPickedPoint.y - this->mSpaceY);
-		this->mSpaceParamW = abs(mPickedPoint.z - this->mSpaceZ);
-
-
-	}
-
-}
-
-void Vis2App::loadObj(const DataSourceRef &dataSource, const DataSourceRef &dataSourceMtl)
-{
-	//throws a build error in a non related namespace
-	/*
-	//get the current model, if one is loaded and delete
-
-	auto batchIterator = std::find(mVecBatchRef.begin(), mVecBatchRef.end(), mCurrentObjecMesh);
-
-	if (mCurrentObjecMesh 
-		&& batchIterator != mVecBatchRef.end())
-	{
-		mVecBatchRef.erase(batchIterator);
-	}
-	*/
-	//ci::fs::path path(dataSource);
-	//ObjLoader * loader;
-	/*
-	if(dataSourceMtl->isFilePath())
-		loader = & ObjLoader(dataSource, dataSourceMtl);
-	else
-		loader = & ObjLoader(dataSource);
-	*/
-
-	ObjLoader loader(dataSource, dataSourceMtl);
-
-	//need trimesh for bounding box functionality
-	
-	mCurrentTriMesh = TriMesh::create(loader);
-	mCurrentVboMesh = VboMesh::create(loader);
-	
-	
-	/*
-	mCurrentTriMesh = TriMesh::create(*(loader));
-	mCurrentVboMesh = VboMesh::create(*(loader));
-	*/
-	//if (!loader.getAvailableAttribs().count(geom::NORMAL))
-		//mCurrentTriMesh->recalculateNormals();
-
-	//choose a renderer
-	//auto batch = gl::Batch::create(*mCurrentObjecMesh, mPhongShader);
-	//auto batch = 
-	
-	//mObjectBatch = gl::Batch::create(*mCurrentTriMesh, *mCurrentShader);
-	mObjectBatch = gl::Batch::create(mCurrentVboMesh, *mCurrentShader);
-	//mVecBatchRef.push_back(batch);
-	//mVecBatchRef.push_back(mObjectBatch);
-}
 
 
 bool Vis2App::testPlaneCut(gl::BatchRef batchRef )
@@ -429,111 +165,24 @@ bool Vis2App::testPlaneCut(gl::BatchRef batchRef )
 
 
 
-bool Vis2App::performPicking(vec3 *pickedPoint, vec3 *pickedNormal)
-{
-	if (!mCurrentTriMesh)
-		return false;
-	// Generate a ray from the camera into our world. Note that we have to
-	// flip the vertical coordinate.
-	float u = mMousePos.x / (float)getWindowWidth();
-	float v = mMousePos.y / (float)getWindowHeight();
-	Ray ray = mCamera.generateRay(u, 1.0f - v, mCamera.getAspectRatio());
-	
-	// The coordinates of the bounding box are in object space, not world space,
-	// so if the model was translated, rotated or scaled, the bounding box would not
-	// reflect that. One solution would be to pass the transformation to the calcBoundingBox() function:
-	//AxisAlignedBox worldBoundsExact = mTriMesh->calcBoundingBox(mTransform); // slow
-	AxisAlignedBox worldBoundsExact = mCurrentTriMesh->calcBoundingBox();
-																			 // But if you already have an object space bounding box, it's much faster to
-																	 // approximate the world space bounding box like this:
-	//mat4 mTransform(1.0f);
-	//AxisAlignedBox worldBoundsApprox = mObjectBounds.transformed(mTransform); // fast
 
-																			  // Draw the object space bounding box in yellow. It will not animate,
-																			  // because animation is done in world space.
-	//drawCube(mObjectBounds, Color(1, 1, 0));
-
-	// Draw the exact bounding box in orange.
-	//drawCube(worldBoundsExact, Color(1, 0.5f, 0));
-
-	// Draw the approximated bounding box in cyan.
-	//drawCube(worldBoundsApprox, Color(0, 1, 1));
-	
-	// Perform fast detection first - test against the bounding box itself.
-	if (!worldBoundsExact.intersects(ray))
-		return false;
-
-	// Set initial distance to something far, far away.
-	float result = FLT_MAX;
-
-	// Traverse triangle list and find the closest intersecting triangle.
-	const size_t polycount = mCurrentTriMesh->getNumTriangles();
-
-	float distance = 0.0f;
-	for (size_t i = 0; i < polycount; ++i) {
-		// Get a single triangle from the mesh.
-		vec3 v0, v1, v2;
-		mCurrentTriMesh->getTriangleVertices(i, &v0, &v1, &v2);
-		
-		mat4 transform(1.0f);
-
-		// Transform triangle to world space.
-		v0 = vec3(transform * vec4(v0, 1.0));
-		v1 = vec3(transform * vec4(v1, 1.0));
-		v2 = vec3(transform * vec4(v2, 1.0));
-
-		// Test to see if the ray intersects this triangle.
-		if (ray.calcTriangleIntersection(v0, v1, v2, &distance)) {
-			// Keep the result if it's closer than any intersection we've had so far.
-			if (distance < result) {
-				result = distance;
-
-				// Assuming this is the closest triangle, we'll calculate our normal
-				// while we've got all the points handy.
-				*pickedNormal = normalize(cross(v1 - v0, v2 - v0));
-			}
-		}
-	}
-
-	// Did we have a hit?
-	if (distance > 0) {
-		// Calculate the exact position of the hit.
-		*pickedPoint = ray.calcPosition(result);
-
-		return true;
-	}
-	else
-		return false;
-}
-
-void vis2::Vis2App::selectObjFileDialog()
-{
-	std::string pathRef = ".";
-	vector<std::string> fileExtension = { "obj", "3ds" };
-
-	//std::tr2::sys::path filePath;
-	
-	//boost
-	ci::fs::path path = getOpenFilePath(pathRef, fileExtension);
-
-	if (!path.empty())
-	{
-		//this->mModelFile = path->
-		this->mModelFile = path.string();
-		this->loadModel();
-	}
-}
 
 
 //creates a cut struct and adds it to the collection of cuts
 void Vis2App::createCut()
 {
-	if (std::find(cutsLabelList.begin(), cutsLabelList.end(), mCutLabel) != cutsLabelList.end())
+
+	auto iterator = std::find(cutsLabelList.begin(), cutsLabelList.end(), mCutLabel);
+	
+	/*
+	if ( iterator != cutsLabelList.end())
 	{
+
+			
 		//print error message duplicate label
 		return;
 	}
-
+	*/
 	
 	sCut cut;
 	cut.camera = CameraPersp(this->mCamera);
@@ -549,9 +198,16 @@ void Vis2App::createCut()
 
 	cut.type = mCutType;
 
-	this->cutsList.push_back(cut);
-	this->cutsLabelList.push_back(mCutLabel);
+	if(iterator != cutsLabelList.end())
+	{
 
+		cutsList.at(iterator - cutsLabelList.begin()) = cut;
+
+	}
+	else{
+		this->cutsList.push_back(cut);
+		this->cutsLabelList.push_back(mCutLabel);
+	}
 	this->setupLabelList();
 	
 }
@@ -577,16 +233,6 @@ void Vis2App::loadCut()
 
 }
 
-void vis2::Vis2App::loadModel()
-{
-	ci::fs::path file(mModelFile);
-	//string_type ext = file.extension();
-
-	//string mtlFile = mModelFile.substr(0, mModelFile.size() - ext) + ".mtl";
-	loadObj(loadFile(mModelFile), loadFile(mModelMtl));
-	//loadObj(loadFile(mModelFile), loadFile(mtlFile));
-	//loadJson();
-}
 
 void Vis2App::buttonLoadModel()
 {
@@ -598,7 +244,7 @@ void Vis2App::buttonLoadModel()
 
 /**
 */
-void Vis2App::updateViewInterface()
+void Vis2App::updateViewInterface() const
 {
 	if (mViewSettings)
 		mViewSettings->clear();
@@ -626,6 +272,10 @@ void Vis2App::draw()
 
 	//gl::clear(Color(.20f, .20f, .20f));
 	gl::clear(Color(mBackgroundColor));
+
+	//gl::drawString("Framerate: " + toString(getAverageFps()), vec2(10, 10), Color::white(), mFont);
+	
+	mFps = toString(getAverageFps());
 
 	if (this->mShowGrid && this->mGridLoop)
 		mGridLoop->draw();
@@ -691,14 +341,14 @@ void Vis2App::draw()
 		mPhongShader->uniform("uSpacePos", vec4(mSpaceX, mSpaceY, mSpaceZ, 1.0));
 		mPhongShader->uniform("uCutAlpha", mCutAlpha);
 
-		mPhongShader->uniform("uTexturingMode", (int)mTextureType);
+		mPhongShader->uniform("uTexturingMode", int(mTextureType));
 
 		mPhongShader->uniform("uFreq", ivec2(80));
 		mPhongShader->uniform("uBackfaceCulling", mEnableFaceCulling);
-		mPhongShader->uniform("uCutMode", (int)mCutType);
+		mPhongShader->uniform("uCutMode", int(mCutType));
 
-
-
+		//structs as uniform?
+		
 	}
 
 	if (mObjectBatch)
@@ -725,45 +375,45 @@ void Vis2App::draw()
 
 
 	//Picking to select center of cut
-	if (mEnableSelect) 
+	if (mEnableSelect && !mMouseDown)
 	{
 		
-		vec3 pickedNormal;
-		if (performPicking(&mPickedPoint, &pickedNormal)) {
+		
+		if (performPicking(&mPickedPoint, &mPickedNormal)) {
 			
 			gl::ScopedColor color(Color::white());
 			
 			// Draw an arrow to the picked point along its normal.
 			gl::ScopedGlslProg shader(gl::getStockShader(gl::ShaderDef().color().lambert()));
-			gl::drawVector(mPickedPoint + pickedNormal, mPickedPoint);
+			gl::drawVector(mPickedPoint + mPickedNormal, mPickedPoint);
 		}
 	}
-}
-
-void Vis2App::saveToJson()
-{
-	//if(())
+	
+	if (mMouseDown && mEnableSelect)
 	{
-		mJsonTree = JsonTree();
+		
+		if (performPicking(&mMouseDrawPoint, &mMouseDrawPickedNormal)) {
+
+			gl::ScopedColor color(Color(0.0f,1.0f,0.0f));
+
+			// Draw an arrow to the picked point along its normal.
+			gl::ScopedGlslProg shader(gl::getStockShader(gl::ShaderDef().color().lambert()));
+			gl::drawVector(mMouseDrawPoint + mMouseDrawPickedNormal, mMouseDrawPoint);
+			
+			gl::drawVector(mPickedPoint + mPickedNormal, mPickedPoint);
+		}
 	}
-	this->mCamera.getAspectRatio();
-	this->mCamera.getEyePoint();
+	
 	
 }
 
-
-void Vis2App::loadJson()
-{
-
-
-}
 
 void vis2::Vis2App::createGridLoop()
 {
 	mGridLoop = gl::VertBatch::create(GL_LINE_LOOP);
 	mGridLoop->begin(GL_LINE_LOOP);
 
-	for (int i = -mNumGridCells; i <= 0; ++i) {
+	for (auto i = -mNumGridCells; i <= 0; ++i) {
 
 		mGridLoop->color(Color(0.25f, 0.25f, 0.25f));
 
@@ -824,6 +474,8 @@ void vis2::Vis2App::saveCurrentCutAndView()
 
 }
 
+
+
 CINDER_APP(Vis2App, RendererGl , [&](App::Settings *settings) {
 	
 	
@@ -841,3 +493,147 @@ CINDER_APP(Vis2App, RendererGl , [&](App::Settings *settings) {
 	}
 
 });
+
+
+/////////////////////////////////////////
+//User input
+////////////
+
+void vis2::Vis2App::keyDown(KeyEvent event)
+{
+	switch (event.getCode())
+	{
+	case KeyEvent::KEY_c:
+		this->enableSelect();
+		break;
+	case KeyEvent::KEY_d:
+		this->mSpaceParamU = 1.0f;
+		this->mSpaceParamV = 1.0f;
+		this->mSpaceParamW = 1.0f;
+		break;
+	case KeyEvent::KEY_r:
+		//resetCam();
+		break;
+
+
+		
+//move camera
+	case KeyEvent::KEY_DOWN:
+		
+		break;
+	case KeyEvent::KEY_UP:
+
+		break;
+	case KeyEvent::KEY_LEFT:
+
+		break;
+	case KeyEvent::KEY_RIGHT:
+
+		break;
+	case KeyEvent::KEY_ESCAPE:
+		if (mEnableSelect) {
+			mEnableSelect = false;
+			mMouseDown = false;
+		}
+		else
+			this->quit();
+	default:
+		break;
+
+	}
+}
+
+void Vis2App::mouseMove(MouseEvent event)
+{
+	this->mMousePos = event.getPos();
+}
+
+void Vis2App::mouseDown(MouseEvent event)
+{
+	this->mMousePos = event.getPos();
+
+	if (!mEnableSelect)
+		mCamUi.mouseDown(event);
+	else
+	{
+		this->mSpaceX = mPickedPoint.x;
+		this->mSpaceY = mPickedPoint.y;
+		this->mSpaceZ = mPickedPoint.z;
+
+		//mEnableSelect = false;
+	}
+
+	mMouseDown = true;
+
+	/*
+	auto ray = mCamera.generateRay(event.getPos(), getWindowSize());
+
+	ray.calcPlaneIntersection();
+	*/
+
+	//automates mouse control:
+	//mousedown enables moving camera along a ball
+
+	//sort for alpha blending
+
+
+	/*
+	if (!mVecVertBatchRef.empty())
+	{
+	std::sort(mVecVertBatchRef.begin(), mVecBatchRef.end()
+	, [](const VertBatchRef &lhs, const VertBatchRef &rhs)
+	{
+	return lhs.get()->
+	}
+
+	for (gl::VertBatchRef element : mVecVertBatchRef)
+	{
+	element->draw();
+	}
+
+	// something like this
+	vector<ObjectType> objects;
+	std::sort(objects.begin(), objects.end(),
+	[](const ObjectType &lhs, const ObjectType &rhs)
+	{ return lhs.z < rhs.z; });
+
+
+	}
+	*/
+	int err = gl::getError();
+	if (err != GL_NO_ERROR)
+	{
+		CI_LOG_E(gl::getErrorString(err));
+
+	}
+}
+
+
+void vis2::Vis2App::mouseUp(MouseEvent event)
+{
+	this->mMousePos = event.getPos();
+	mEnableSelect = false;
+	mMouseDown = false;
+}
+
+
+void Vis2App::mouseWheel(MouseEvent event)
+{
+	this->mMousePos = event.getPos();
+	mCamUi.mouseWheel(event);
+}
+
+void Vis2App::mouseDrag(MouseEvent event)
+{
+	this->mMousePos = event.getPos();
+	if (!mEnableSelect)
+		mCamUi.mouseDrag(event);
+	else
+	{
+		this->mSpaceParamU = max(abs(mPickedPoint.x - this->mMouseDrawPoint.x),0.1f);
+		this->mSpaceParamV = max(abs(mPickedPoint.y - this->mMouseDrawPoint.y),0.1f);
+		this->mSpaceParamW = max(abs(mPickedPoint.z - this->mMouseDrawPoint.z),0.1f);
+
+	}
+	
+}

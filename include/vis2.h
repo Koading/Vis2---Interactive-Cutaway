@@ -136,6 +136,8 @@ namespace vis2 {
 
 			float alpha = 0.0;
 			cutType type;
+
+			bool enabled = true;
 		} ;
 
 
@@ -158,7 +160,7 @@ namespace vis2 {
 		
 		params::InterfaceGlRef  mRigs;
 
-		void updateViewInterface();
+		void updateViewInterface() const;
 		
 		shaderSetting mShaderSetting;
 
@@ -176,6 +178,11 @@ namespace vis2 {
 		bool testPlaneCut(gl::BatchRef batchRef);
 
 		vec3 mPickedPoint;
+		vec3 mPickedNormal;
+
+		vec3 mMouseDrawPoint;
+		vec3 mMouseDrawPickedNormal;
+
 		void enableSelect();
 
 		float mSpaceParamU;
@@ -227,6 +234,16 @@ namespace vis2 {
 
 		void resetCam();
 		void moveCameraPosLinear(CameraPersp newCam);
+
+		bool mMouseDown;
+
+		Font mFont;
+
+		std::string mFps;
+
+		vec2 mMouseStartPoint;
+		vec2 mMouseEndPoint;
+
 	};
 }
 

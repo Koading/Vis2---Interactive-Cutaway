@@ -204,10 +204,13 @@
     <ClInclude Include="..\include\Resources.h" />
     <ClInclude Include="..\include\vis2.h" />
     <ClInclude Include="..\include\vis2enums.h" />
+    <ClInclude Include="..\src\vis2Input.cpp" />
     <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\src\Vis2File.cpp" />
     <ClCompile Include="..\src\vis2main.cpp" />
+    <ClCompile Include="vis2UI.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets" />

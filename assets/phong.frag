@@ -9,10 +9,11 @@ struct booleanCut
 };
 
 uniform int			uNumCuts;
-//uniform booleanCut	uCutArray[5];
+uniform booleanCut	uCutArray[5];
 uniform vec3		uCutCenter[5];
 uniform vec3		uCutUVW[5];
 uniform int			uCutType[5];
+
 
 uniform sampler2D	uTex0;
 uniform int			uTexturingMode;
@@ -147,21 +148,23 @@ void main()
 {
 
 	float alpha = 1.0;
+	bool isCut = false;
 	if( cut(vVertexIn.realPosition, uSpacePos, uSpaceParams ))
 	{
 		if(uCutAlpha == 0.0f)
 			discard;
-		else
-			alpha = uCutAlpha;
+		//else
+			//alpha = uCutAlpha;
+
+		isCut = true;
 	}
 
 	// set diffuse and specular colors
 	vec3 cDiffuse = vVertexIn.color.rgb;
 	vec3 cSpecular = vec3( 0.3 );
 	
-	//extra lightsource will be unnecessary for this application, 
-	//therefore 
-	vec3 vLightPosition = -vVertexIn.realPosition.xyz;
+	//extra lightsource(s) handling will be unnecessary for this application
+		vec3 vLightPosition = -vVertexIn.position.xyz;
 
 	// lighting calculations
 	vec3 L = normalize( vLightPosition - vVertexIn.position.xyz );
@@ -211,6 +214,11 @@ void main()
 	else if ( uTexturingMode == 3 )
 		diffuse *= vVertexIn.normal.rgb;
 	
+
+	if(isCut)
+		alpha = uCutAlpha;
+
+
 	vec3 specular = blinn * cSpecular;
 	
 	vec3 finalColor = diffuse + specular;

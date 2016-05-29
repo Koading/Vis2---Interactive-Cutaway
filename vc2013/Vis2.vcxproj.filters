@@ -33,6 +33,9 @@
     <ClInclude Include="..\include\vis2enums.h">
       <Filter>Source Files\src</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\vis2Input.cpp">
+      <Filter>Source Files\src</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\include\Resources.h">
@@ -68,6 +71,12 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\vis2main.cpp">
+      <Filter>Source Files\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\Vis2File.cpp">
+      <Filter>Source Files\src</Filter>
+    </ClCompile>
+    <ClCompile Include="vis2UI.cpp">
       <Filter>Source Files\src</Filter>
     </ClCompile>
   </ItemGroup>
