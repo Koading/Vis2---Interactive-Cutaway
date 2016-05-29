@@ -58,9 +58,16 @@ void Vis2App::setup()
 
 	loadModel();
 
+	/*
 	geom::WireSphere();
 	geom::WireCube;
+	*/
+	TriMesh::Format fmt = TriMesh::Format().positions().normals().texCoords().tangents();
+	TriMesh mesh((geom::WireCube(vec3(1.0)), fmt));
 
+	mCutWire = mesh;
+	mCutWireBatch = Batch::create(mCutWire, gl::context()->getStockShader(gl::ShaderDef().color()));
+	
 	//create default cut
 	this->createCut();
 }
@@ -101,6 +108,8 @@ void Vis2App::setupGLSL()
 		mWireShader = (gl::context()->getStockShader(gl::ShaderDef().color()));
 		
 	}
+
+	
 
 }
 
@@ -265,7 +274,7 @@ void Vis2App::draw()
 	gl::enableDepthWrite();
 	gl::enableDepthRead();
 	gl::enableDepth();
-
+	
 	gl::enableFaceCulling(mEnableFaceCulling);
 	
 	gl::setMatrices(mCamera);
@@ -346,7 +355,42 @@ void Vis2App::draw()
 		mPhongShader->uniform("uFreq", ivec2(80));
 		mPhongShader->uniform("uBackfaceCulling", mEnableFaceCulling);
 		mPhongShader->uniform("uCutMode", int(mCutType));
+		mPhongShader->uniform("uCutEnable", mCutEnabled);
 
+		auto size = cutsLabelList.size();
+
+		auto it = cutsLabelList.begin();
+		
+		mPhongShader->uniform("uNumCuts", int(size));
+
+		//vec3 *cutCenter = new vec3[size];
+		vector<vec3> cutCenter;
+		vector<vec3> cutUVW;
+		vector<int>  cutType;
+		vector<bool> cutEnabled;
+		vector<float> cutAlpha;
+
+		while (it != cutsLabelList.end())
+		{
+			sCut cut = cutsList.at(it - cutsLabelList.begin());
+
+			vec3 v3Pos = vec3(cut.x, cut.y, cut.z);
+			vec3 v3UVW = vec3(cut.u, cut.v, cut.w);
+			
+			cutCenter.push_back(v3Pos);
+			cutUVW.push_back(v3UVW);
+			cutType.push_back(int(cut.type));
+			cutEnabled.push_back(cut.enabled);
+			cutAlpha.push_back(cut.alpha);
+
+			++it;
+		}
+
+		mPhongShader->uniform("uCutCenter",		(&cutCenter));
+		mPhongShader->uniform("uCutUVW",		(&cutUVW));
+		mPhongShader->uniform("uCutType",		(&cutType));
+		mPhongShader->uniform("uCutEnabled",	(&cutEnabled));
+		mPhongShader->uniform("uCutAlphas",		(&cutAlpha));
 		//structs as uniform?
 		
 	}
@@ -373,12 +417,19 @@ void Vis2App::draw()
 	if (mCutSettings)
 		mCutSettings->draw();
 
-
-	//Picking to select center of cut
+	
+	if (mCutWireBatch)
+	{
+		gl::pushMatrices();
+		gl::scale(this->mSpaceParamU, this->mSpaceParamV, this->mSpaceParamW);
+		//gl::draw(mCutWireBatch)
+		mCutWireBatch->draw();
+		
+		gl::popMatrices();
+	}
+		//Picking to select center of cut
 	if (mEnableSelect && !mMouseDown)
 	{
-		
-		
 		if (performPicking(&mPickedPoint, &mPickedNormal)) {
 			
 			gl::ScopedColor color(Color::white());
@@ -423,7 +474,7 @@ void vis2::Vis2App::createGridLoop()
 		mGridLoop->vertex(float(mNumGridCells), 0.0f, float(i));
 	}
 
-	for (int i = 1; i <= mNumGridCells; ++i) {
+	for (auto i = 1; i <= mNumGridCells; ++i) {
 
 		mGridLoop->color(Color(0.25f, 0.25f, 0.25f));
 

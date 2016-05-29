@@ -109,6 +109,7 @@ namespace vis2 {
 
 		gl::GlslProgRef		*mCurrentShader;
 
+		void loadObj(const DataSourceRef& dataSource);
 		void loadObj(const DataSourceRef &dataSourceObj, const DataSourceRef &dataSourceMtl);
 		
 		
@@ -122,7 +123,6 @@ namespace vis2 {
 		struct sCut
 		{
 			//std::string label = "DEFUALTLABELCHANGETHIS";
-
 			CameraPersp camera;
 			float u = 0.0;
 			float v = 0.0;
@@ -132,8 +132,6 @@ namespace vis2 {
 			float y = 0.0;
 			float z = 0.0;
 
-			bool enabeled;
-
 			float alpha = 0.0;
 			cutType type;
 
@@ -141,11 +139,13 @@ namespace vis2 {
 		} ;
 
 
-		string mCutLabel;
+		string	mCutLabel;
 
-		int mCutSelection;
-		vector<string> cutsLabelList;
-		vector<sCut> cutsList;
+		int		mCutSelection;
+		bool	mCutEnabled = true;
+		
+		vector<string>	cutsLabelList;
+		vector<sCut>	cutsList;
 
 
 		void createCut();
@@ -204,7 +204,7 @@ namespace vis2 {
 		string mCurrentModelPath;
 		void selectObjFileDialog();
 		void loadModel();
-
+		
 		Color mBackgroundColor;
 
 		bool mEnableFaceCulling;
@@ -235,14 +235,16 @@ namespace vis2 {
 		void resetCam();
 		void moveCameraPosLinear(CameraPersp newCam);
 
-		bool mMouseDown;
-
-		Font mFont;
+		bool	mMouseDown;
+		Font	mFont;
 
 		std::string mFps;
 
-		vec2 mMouseStartPoint;
-		vec2 mMouseEndPoint;
+		vec2		mMouseStartPoint;
+		vec2		mMouseEndPoint;
+
+		TriMesh			mCutWire;
+		gl::BatchRef	mCutWireBatch;
 
 	};
 }

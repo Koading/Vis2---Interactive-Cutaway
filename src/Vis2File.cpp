@@ -1,4 +1,7 @@
 #include "vis2.h"
+#include <boost/algorithm/string/replace.hpp>
+#include <boost/filesystem.hpp>
+
 
 using namespace vis2;
 using namespace boost::filesystem;
@@ -12,12 +15,35 @@ using namespace gl;
 void vis2::Vis2App::loadModel()
 {
 	ci::fs::path file(mModelFile);
-	//string_type ext = file.extension();
 
-	//string mtlFile = mModelFile.substr(0, mModelFile.size() - ext) + ".mtl";
-	loadObj(loadFile(mModelFile), loadFile(mModelMtl));
-	//loadObj(loadFile(mModelFile), loadFile(mtlFile));
-	//loadJson();
+	if (!boost::filesystem::exists(mModelFile))
+		return;
+
+	(boost::filesystem::exists(mModelMtl) ? loadObj(loadFile(mModelFile), loadFile(mModelMtl)) : loadObj(loadFile(mModelFile)));
+	
+}
+
+
+void Vis2App::loadObj(const DataSourceRef &dataSource)
+{
+	try {
+
+		ObjLoader loader(dataSource);
+
+		//need trimesh for bounding box functionality
+
+		mCurrentTriMesh = TriMesh::create(loader);
+		mCurrentVboMesh = VboMesh::create(loader);
+
+		mObjectBatch = gl::Batch::create(mCurrentVboMesh, *mCurrentShader);
+	}
+	catch (ci::Exception &ex)
+	{
+
+
+	}
+
+
 }
 
 void Vis2App::loadObj(const DataSourceRef &dataSource, const DataSourceRef &dataSourceMtl)
@@ -42,14 +68,22 @@ void Vis2App::loadObj(const DataSourceRef &dataSource, const DataSourceRef &data
 	else
 	loader = & ObjLoader(dataSource);
 	*/
+	try {
 
-	ObjLoader loader(dataSource, dataSourceMtl);
+		ObjLoader loader(dataSource, dataSourceMtl);
 
-	//need trimesh for bounding box functionality
+		//need trimesh for bounding box functionality
 
-	mCurrentTriMesh = TriMesh::create(loader);
-	mCurrentVboMesh = VboMesh::create(loader);
+		mCurrentTriMesh = TriMesh::create(loader);
+		mCurrentVboMesh = VboMesh::create(loader);
 
+		mObjectBatch = gl::Batch::create(mCurrentVboMesh, *mCurrentShader);
+	}
+	catch(ci::Exception &ex)
+	{
+		
+
+	}
 
 	/*
 	mCurrentTriMesh = TriMesh::create(*(loader));
@@ -63,7 +97,7 @@ void Vis2App::loadObj(const DataSourceRef &dataSource, const DataSourceRef &data
 	//auto batch = 
 
 	//mObjectBatch = gl::Batch::create(*mCurrentTriMesh, *mCurrentShader);
-	mObjectBatch = gl::Batch::create(mCurrentVboMesh, *mCurrentShader);
+	
 	//mVecBatchRef.push_back(batch);
 	//mVecBatchRef.push_back(mObjectBatch);
 }
@@ -81,20 +115,30 @@ void vis2::Vis2App::selectObjFileDialog()
 	if (!path.empty())
 	{
 		//this->mModelFile = path->
-		this->mModelFile = path.string();
+		this->mModelFile = this->mModelMtl = path.string();
+		boost::replace_last(this->mModelMtl, ".obj", ".mtl");
+
 		this->loadModel();
 	}
 }
 
 void Vis2App::saveToJson()
 {
-	//if(())
-	{
-		mJsonTree = JsonTree();
-	}
-	this->mCamera.getAspectRatio();
-	this->mCamera.getEyePoint();
+	mJsonTree = JsonTree();
+	
+	auto it = cutsLabelList.begin();
+	while(it!=cutsLabelList.end())
+	{ 
+		int index = (it - cutsLabelList.begin());
+		
+		auto cut = cutsList.at(index);
 
+		cut.camera.getAspectRatio();
+		cut.camera.getEyePoint();
+		cut.camera.getFov();
+		cut.camera.getViewDirection();
+
+	}
 }
 
 

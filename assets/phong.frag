@@ -1,6 +1,5 @@
 #version 330
 
-
 struct booleanCut
 {
 	vec3 center;
@@ -10,15 +9,19 @@ struct booleanCut
 
 uniform int			uNumCuts;
 uniform booleanCut	uCutArray[5];
+
+
 uniform vec3		uCutCenter[5];
 uniform vec3		uCutUVW[5];
 uniform int			uCutType[5];
-
+uniform bool		uCutEnabled[5];
+uniform float		uCutAlphas[5];
 
 uniform sampler2D	uTex0;
 uniform int			uTexturingMode;
 uniform ivec2       uFreq;
-uniform int			uLightAll;
+
+uniform bool		uCutEnable;
 uniform vec4		uSpaceParams;
 uniform vec4		uSpacePos;
 uniform float		uCutAlpha;
@@ -108,7 +111,8 @@ bool cylinderCut(vec4 point, vec4 pos, vec4 uvw)
 
 bool planeCut(vec4 p, vec4 pos, vec4 boxUVW)
 {
-	pos += p;
+
+	pos -= p;
 	return (pos.x * boxUVW.x + pos.y * boxUVW.y + pos.z * boxUVW.z + pos.a + boxUVW.a) > 0 ;
 
 	//return (dot4(pos + (p * boxUVW)),(vec4(1)) > 0);
@@ -149,7 +153,8 @@ void main()
 
 	float alpha = 1.0;
 	bool isCut = false;
-	if( cut(vVertexIn.realPosition, uSpacePos, uSpaceParams ))
+
+	if( uCutEnable && cut(vVertexIn.realPosition, uSpacePos, uSpaceParams ))
 	{
 		if(uCutAlpha == 0.0f)
 			discard;

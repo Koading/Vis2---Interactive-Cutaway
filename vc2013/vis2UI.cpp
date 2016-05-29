@@ -23,13 +23,13 @@ void Vis2App::setupUI()
 
 	//mCameraSettings = params::InterfaceGl::create(getWindow(), "Camera", toPixels(ivec2(200, 200)));	
 
+
+	//Cutsettings
 	mCutSettings = params::InterfaceGl::create(getWindow(), "Cut Settings",
 		toPixels(ivec2(sizeX, sizeY)));
 
-	//mCutSettings->addParam("EnablePlaneCut", &mEnablePlaneCut);
 	mCutSettings->addSeparator();
-	//mCutSettings->addParam("Plane Params", &(mPlaneCutParams.x));
-
+	
 	mCutSettings->addParam("Cut Mode", vecCutTypes, reinterpret_cast<int*>(&mCutType));
 
 	mCutSettings->addParam("U", &mSpaceParamU).min(0.0f).step(0.1f);
@@ -50,6 +50,10 @@ void Vis2App::setupUI()
 		std::bind(&Vis2App::enableSelect, this)
 		);
 
+
+
+	/////
+	//Options
 	mOptions = params::InterfaceGl::create(getWindow(), "General Options",
 		toPixels(ivec2(sizeX, sizeY)));
 	mOptions->addParam("Framerate", &mFps, true);
@@ -64,22 +68,28 @@ void Vis2App::setupUI()
 	mOptions->setPosition(vec2(stdMargin, stdMargin));
 	//mOptions->addParam("")
 
-
 	mOptions->addParam("Texturing Mode", texturingModes, (int*)&mTextureType);
 
 	mOptions->addButton("Open File",
 		std::bind(&Vis2App::selectObjFileDialog, this)
 		);
 
+	///////////7
+	//rigs
+	//
 	mRigs = params::InterfaceGl::create(getWindow(), "Rigs",
 		toPixels(ivec2(sizeX, sizeY)));
 
 	mRigs->addParam("LabelName", &mCutLabel);
+	mRigs->addParam("Enabled", &mCutEnabled);
 	//mRigs->addParam("Rig", cutsLabelList, &mCutSelection);
 	mRigs->addButton("Safe Cut", std::bind(&Vis2App::createCut, this));
 	setupLabelList();
 	mRigs->addButton("Load Cut", std::bind(&Vis2App::loadCut, this));
 	mCutSettings->setPosition(vec2(offsetXRight, offsetYTop));
+
+
+
 	mRigs->setPosition(
 		vec2(mCutSettings->getPosition().x,
 			mCutSettings->getPosition().y + mCutSettings->getHeight() + offsetYTop
