@@ -10,8 +10,9 @@ using namespace ci::app;
 using namespace std;
 using namespace gl;
 
-
-
+/**
+<summary> </summary>
+*/
 void vis2::Vis2App::loadModel()
 {
 	ci::fs::path file(mModelFile);
@@ -20,10 +21,12 @@ void vis2::Vis2App::loadModel()
 		return;
 
 	(boost::filesystem::exists(mModelMtl) ? loadObj(loadFile(mModelFile), loadFile(mModelMtl)) : loadObj(loadFile(mModelFile)));
-	
 }
 
 
+/**
+<summary> Load .obj file without mtl(materials, textures, etc)</summary>
+*/
 void Vis2App::loadObj(const DataSourceRef &dataSource)
 {
 	try {
@@ -31,8 +34,8 @@ void Vis2App::loadObj(const DataSourceRef &dataSource)
 		ObjLoader loader(dataSource);
 
 		//need trimesh for bounding box functionality
-
 		mCurrentTriMesh = TriMesh::create(loader);
+		mObjectBounds = mCurrentTriMesh->calcBoundingBox();
 		mCurrentVboMesh = VboMesh::create(loader);
 
 		mObjectBatch = gl::Batch::create(mCurrentVboMesh, *mCurrentShader);
@@ -46,6 +49,9 @@ void Vis2App::loadObj(const DataSourceRef &dataSource)
 
 }
 
+/**
+<summary> Load .obj and .mtl file and create mesh and vbo</summary>
+*/
 void Vis2App::loadObj(const DataSourceRef &dataSource, const DataSourceRef &dataSourceMtl)
 {
 	//throws a build error in a non related namespace
@@ -102,19 +108,23 @@ void Vis2App::loadObj(const DataSourceRef &dataSource, const DataSourceRef &data
 	//mVecBatchRef.push_back(mObjectBatch);
 }
 
+
+
+/**
+<summary> Callback for Load button
+
+Opens an OS style file open dialog, to open a standard obj file
+</summary>
+*/
 void vis2::Vis2App::selectObjFileDialog()
 {
 	std::string pathRef = ".";
-	vector<std::string> fileExtension = { "obj", "3ds" };
+	vector<std::string> fileExtension = { "obj" };
 
-	//std::tr2::sys::path filePath;
-
-	//boost
 	ci::fs::path path = getOpenFilePath(pathRef, fileExtension);
 
 	if (!path.empty())
 	{
-		//this->mModelFile = path->
 		this->mModelFile = this->mModelMtl = path.string();
 		boost::replace_last(this->mModelMtl, ".obj", ".mtl");
 
@@ -122,6 +132,8 @@ void vis2::Vis2App::selectObjFileDialog()
 	}
 }
 
+
+/*
 void Vis2App::saveToJson()
 {
 	mJsonTree = JsonTree();
@@ -146,3 +158,4 @@ void Vis2App::loadJson()
 {
 
 }
+*/

@@ -28,6 +28,8 @@ uniform float		uCutAlpha;
 uniform bool		uBackfaceCulling;
 uniform int			uCutMode;
 
+uniform bool		uRenderEdges;
+
 in VertexData	{
 	vec4 realPosition;
 	vec4 position;
@@ -41,17 +43,18 @@ out vec4 oFragColor;
 //boolean operators
 
 //
+/*
 float sphere (vec3 p, float r)
 {
     return length (p) - r;
 }
-/*
+
 float box (vec3 p, vec3 u, vec3 v, float w)
 {
     return length (max (abs (u) - v + vec3 (w), .0)) - w;
 
 }
-*/
+
 float cylinder (vec3 p, vec3 n)
 {
     return length (p.xz - n.xy) - n.z;
@@ -76,11 +79,14 @@ vec3 opRep( vec3 p, vec3 c )
 {
     return mod(p,c)-0.5*c;
 }
+*/
 
 
-
-
-// Based on OpenGL Programming Guide (8th edition), p 457-459.
+/**
+<summary> draw a checkered texture along the uv coords
+ Based on OpenGL Programming Guide (8th edition), p 457-459.
+ </summary>
+*/
 float checkered( in vec2 uv, in ivec2 freq )
 {
 	vec2 checker = fract( uv * freq );
@@ -108,7 +114,9 @@ bool cylinderCut(vec4 point, vec4 pos, vec4 uvw)
 */
 
 
-
+/**
+<summary>Perfom a test on a point p whether the position is above or below a plane</summary>
+*/
 bool planeCut(vec4 p, vec4 pos, vec4 boxUVW)
 {
 
@@ -118,6 +126,9 @@ bool planeCut(vec4 p, vec4 pos, vec4 boxUVW)
 	//return (dot4(pos + (p * boxUVW)),(vec4(1)) > 0);
 }
 
+/**
+<summary>Perfom a test on a point p whether p.xyz is inside a box uvw</summary>
+*/
 bool boxCut(vec4 p, vec4 boxPos, vec4 boxUVW)
 {
 	vec4 relPos = p - boxPos;
@@ -128,6 +139,9 @@ bool boxCut(vec4 p, vec4 boxPos, vec4 boxUVW)
 	);
 }
 
+/**
+<summary>Perfom a test on a point p if the radius of the ball (x2 + y2 + z2) is smaller than the radius of uvw</summary>
+*/
 bool ballCut(vec4 p, vec4 ballPos, vec4 ballDims)
 {
 	
@@ -137,6 +151,10 @@ bool ballCut(vec4 p, vec4 ballPos, vec4 ballDims)
 	
 }
 
+
+/**
+<summary>Perfom a test on a point p if the radius of the ball (x2 + y2 + z2) is smaller than the radius of uvw</summary>
+*/
 bool cut(vec4 point, vec4 cutPos, vec4 uvw, int type)
 {
 	if (type == 3)
@@ -153,7 +171,6 @@ void main()
 
 	float alpha = 1.0;
 	bool isCut = false;
-
 
 	//current cut
 	if( uCutEnable && cut(vVertexIn.realPosition, uSpacePos, uSpaceParams, uCutMode))
@@ -213,27 +230,27 @@ void main()
 	const float kNormalization = ( kMaterialShininess + 8.0 ) / ( 3.14159265 * 8.0 );
 	float blinn = pow( max( dot( N, H ), 0.0 ), kMaterialShininess ) * kNormalization;
 
-	vec3 diffuse = vec3( phong );
+	vec3 diffuse = vec3( phong ); 
 	
-	if(uTexturingMode == 0)
+	if(uTexturingMode == 1)
 	{
 		diffuse *= cDiffuse;
 		alpha = vVertexIn.color.a;
 	}
 	//checkered pattern
-	if( uTexturingMode == 1 ) {
+	if( uTexturingMode == 2 ) {
 		diffuse *= vec3( 0.7, 0.5, 0.3 );
 		diffuse *= 0.5 + 0.5 * checkered( vVertexIn.texCoord, uFreq );
 	}
 	//texture
-	else if ( uTexturingMode == 2 )
+	else if ( uTexturingMode == 3 )
 	{
 		vec4 tex = texture( uTex0, vVertexIn.texCoord.st);
 		diffuse *= tex.rgb;
 		alpha = tex.a;
 	}
 	//color = normals
-	else if ( uTexturingMode == 3 )
+	else if ( uTexturingMode == 4 )
 		diffuse *= vVertexIn.normal.rgb;
 	
 
@@ -247,6 +264,8 @@ void main()
 		
 	oFragColor = vec4( finalColor, alpha );
 	
+
+
 	// alpha
 	//float alpha = ( uTexturingMode == 3 ) ? 0.75 : 1.0;
 	//float alpha = 0.15;
@@ -258,7 +277,6 @@ void main()
 	//bvec b =lessThan( vVertexIn.realPosition.xyz , vec3 (0.0) ); 
 	//if(  bvec.x && bvec.y && bvec.z )
 
-
 	//if(vVertexIn.realPosition.x < 1.0 && vVertexIn.realPosition.y < 1.0 && vVertexIn.realPosition.z < 0.0 )
 	//if(testCut(vVertexIn.realPosition))
 	/*
@@ -268,7 +286,4 @@ void main()
 		oFragColor = vec4( diffuse + specular, alpha );
 	else
 	*/
-	
-
-
 }

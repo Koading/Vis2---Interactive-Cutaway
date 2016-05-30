@@ -13,9 +13,15 @@ enum cutType {
 
 enum TexType {
 	_NONE = 0,
-	CHECKERED = 1,
+	MATERIAL = 1,
+	CHECKERED = 2,
 	TEXTURE,
 	NORMALS
+};
+
+enum shaderSetting
+{
+	PHONG, FLAT, WIRE
 };
 
 

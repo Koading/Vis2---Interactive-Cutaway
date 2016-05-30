@@ -3,17 +3,17 @@
 uniform mat4	ciModelViewProjection;
 uniform mat4	ciModelView;
 uniform mat3	ciNormalMatrix;
-
+/*
 struct booleanCut
 {
 	vec3	center;
 	vec3	uvw;
 	int		type;
 };
-
-uniform int			uNumCuts;
+*/
+//uniform int			uNumCuts;
 //uniform booleanCut	uCutArray[10];
-uniform vec4		uSpaceParams;
+//uniform vec4		uSpaceParams;
 
 in vec4		ciPosition;
 in vec3		ciNormal;
@@ -28,6 +28,10 @@ out VertexData {
 	vec2 texCoord;
 } vVertexOut;
 
+
+/**
+<summary> Standard vertex shader, performs viewport transformation, nothing special</summary>
+*/
 void main()
 {
 	//if( boxCut(ciPosition, vec4(1.0,1.0,1.0,1.0), vec4(10.0,10.0,10.0,1.0)))

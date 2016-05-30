@@ -5,12 +5,17 @@ using namespace ci;
 
 
 
+/**
+<summary>User Interface
 
+Handles positioning, lists
+</summary>
+*/
 void Vis2App::setupUI()
 {
 
 	const static vector<string> vecCutTypes = { "none", "box", "ball", "plane" };
-	const static vector<string> texturingModes = { "none" , "checkered", "texture", "normals" };
+	const static vector<string> texturingModes = { "none" , "material","checkered", "texture", "normals" };
 
 	int sizeX = 200;
 	int sizeY = 300;
@@ -68,7 +73,7 @@ void Vis2App::setupUI()
 	mOptions->setPosition(vec2(stdMargin, stdMargin));
 	//mOptions->addParam("")
 
-	mOptions->addParam("Texturing Mode", texturingModes, (int*)&mTextureType);
+	mOptions->addParam("Texturing Mode", texturingModes, reinterpret_cast<int*>(&mTextureType));
 
 	mOptions->addButton("Open File",
 		std::bind(&Vis2App::selectObjFileDialog, this)
@@ -100,12 +105,30 @@ void Vis2App::setupUI()
 
 }
 
+
+/**
+<summary>
+
+(Re)sets the dropdown list for cuts. 
+
+</summary>
+*/
 void vis2::Vis2App::setupLabelList()
 {
 	mRigs->addParam("Rig", cutsLabelList, &mCutSelection);
 }
 
-bool Vis2App::performPicking(vec3 *pickedPoint, vec3 *pickedNormal)
+/**
+
+<summary> 
+
+Performs a raycast from the mouse.xy screen coordinates
+Returns true if the ray hits a precalculated bounding box of the object, holds position and normal as a pointer
+
+</summary>
+
+*/
+bool Vis2App::performPicking(vec3 *pickedPoint, vec3 *pickedNormal) const
 {
 	if (!mCurrentTriMesh)
 		return false;
@@ -113,30 +136,24 @@ bool Vis2App::performPicking(vec3 *pickedPoint, vec3 *pickedNormal)
 	// flip the vertical coordinate.
 	float u = mMousePos.x / static_cast<float>(getWindowWidth());
 	float v = mMousePos.y / static_cast<float>(getWindowHeight());
-	Ray ray = mCamera.generateRay(u, 1.0f - v, mCamera.getAspectRatio());
+	auto ray = mCamera.generateRay(u, 1.0f - v, mCamera.getAspectRatio());
 
 	// The coordinates of the bounding box are in object space, not world space,
 	// so if the model was translated, rotated or scaled, the bounding box would not
 	// reflect that. One solution would be to pass the transformation to the calcBoundingBox() function:
 	//AxisAlignedBox worldBoundsExact = mTriMesh->calcBoundingBox(mTransform); // slow
 	AxisAlignedBox worldBoundsExact = mCurrentTriMesh->calcBoundingBox();
+	
 	// But if you already have an object space bounding box, it's much faster to
 	// approximate the world space bounding box like this:
 	//mat4 mTransform(1.0f);
-	//AxisAlignedBox worldBoundsApprox = mObjectBounds.transformed(mTransform); // fast
+	// ReSharper disable once CppUseAuto
+	//AxisAlignedBox worldBoundsApprox = mObjectBounds; // fast
 
-	// Draw the object space bounding box in yellow. It will not animate,
-	// because animation is done in world space.
-	//drawCube(mObjectBounds, Color(1, 1, 0));
-
-	// Draw the exact bounding box in orange.
-	//drawCube(worldBoundsExact, Color(1, 0.5f, 0));
-
-	// Draw the approximated bounding box in cyan.
-	//drawCube(worldBoundsApprox, Color(0, 1, 1));
 
 	// Perform fast detection first - test against the bounding box itself.
 	if (!worldBoundsExact.intersects(ray))
+	//if(!worldBoundsApprox.intersects(ray))
 		return false;
 
 	// Set initial distance to something far, far away.
@@ -161,7 +178,8 @@ bool Vis2App::performPicking(vec3 *pickedPoint, vec3 *pickedNormal)
 		// Test to see if the ray intersects this triangle.
 		if (ray.calcTriangleIntersection(v0, v1, v2, &distance)) {
 			// Keep the result if it's closer than any intersection we've had so far.
-			if (distance < result) {
+			if (distance < result) 
+			{
 				result = distance;
 
 				// Assuming this is the closest triangle, we'll calculate our normal

@@ -26,7 +26,6 @@ Vis2App::Vis2App() :
 	mSpaceZ(0.0f),
 	mSpacePos(vec4(0.0, 0.0, 0.0, 1.0)),
 	mCutAlpha(0.25),
-	//mModelFile(".//..//assets//8lbs.obj"),
 	mEnableSelect(false),
 	mMousePos(vec2(0.0f, 0.0f)),
 	mBackgroundColor(0.1f, 0.1f, 0.1f),
@@ -34,7 +33,7 @@ Vis2App::Vis2App() :
 	mShowGrid(true),
 	mModelFile(".//..//assets//house.obj"),
 	mModelMtl(".//..//assets//house.mtl"), mJsonFile(mModelFile + ".json"),
-	mTextureType(TexType::CHECKERED),
+	mTextureType(TexType::MATERIAL),
 	mCutType(cutType::BOX),
 	mMouseDown(false),
 	mFont(Font("Arial", 12.0f)),
@@ -43,6 +42,13 @@ Vis2App::Vis2App() :
 	
 }
 
+/**
+<summary>
+	
+	Initializes grid, camera and model on app startup
+
+</summary>
+*/
 void Vis2App::setup()
 {
 	//grid setup
@@ -72,6 +78,9 @@ void Vis2App::setup()
 	this->createCut();
 }
 
+/**
+<summary> Compile and create shaders
+*/
 void Vis2App::setupGLSL()
 {
 	//gl::getStockShader
@@ -100,22 +109,18 @@ void Vis2App::setupGLSL()
 			loadFile(".//..//assets//wireframe.frag"), 
 			loadFile(".//..//assets//wireframe.geom")
 			);
-
 	}
 	catch (cinder::Exception &ex)
 	{
 		CI_LOG_E("error loading shader: " << ex.what());
 		mWireShader = (gl::context()->getStockShader(gl::ShaderDef().color()));
-		
 	}
-
-	
 
 }
 
-
-
-
+/**
+<summary> Set correct aspect ratio after resizing</summary>
+*/
 void Vis2App::resize()
 {
 	mCamera.setAspectRatio(getWindowAspectRatio());
@@ -150,6 +155,7 @@ void Vis2App::resetCam()
 
 }
 
+
 void Vis2App::moveCameraPosLinear(CameraPersp newCam)
 {
 	float distance = glm::distance(mCamera.getEyePoint(), newCam.getViewDirection());
@@ -161,37 +167,14 @@ void Vis2App::moveCameraPosLinear(CameraPersp newCam)
 
 
 
-bool Vis2App::testPlaneCut(gl::BatchRef batchRef )
-{
-	//return (mEnablePlaneCut ? true : false);
-	if (!mEnablePlaneCut)
-		return true;
+/**
+<summary> Save button callback. Creates a cut structure instance and saves it in a vector</summary>
+*/
 
-	return false;
-	//VboMeshRef mesh batchRef->getVboMesh();
-	
-}
-
-
-
-
-
-
-//creates a cut struct and adds it to the collection of cuts
 void Vis2App::createCut()
 {
 
 	auto iterator = std::find(cutsLabelList.begin(), cutsLabelList.end(), mCutLabel);
-	
-	/*
-	if ( iterator != cutsLabelList.end())
-	{
-
-			
-		//print error message duplicate label
-		return;
-	}
-	*/
 	
 	sCut cut;
 	cut.camera = CameraPersp(this->mCamera);
@@ -221,6 +204,9 @@ void Vis2App::createCut()
 	
 }
 
+/**
+<summary> Load Button Callback: takes current selection, looks it up in the cut vector and sets parameters</summary>
+*/
 void Vis2App::loadCut()
 {
 	
@@ -243,6 +229,9 @@ void Vis2App::loadCut()
 }
 
 
+/**
+<summary> Load Model Button Callback</summary>
+*/
 void Vis2App::buttonLoadModel()
 {
 	selectObjFileDialog();
@@ -260,13 +249,17 @@ void Vis2App::updateViewInterface() const
 
 }
 
+
+/**
+<summary> Pick Cut Callback</summary>
+*/
 void Vis2App::enableSelect()
 {
 	mEnableSelect = true;
 }
 
 /**
-* Draws the scene
+* <summary>Draws the scene, grid and picker arrows</summary>
 *
 */
 void Vis2App::draw()
@@ -285,7 +278,7 @@ void Vis2App::draw()
 	//gl::drawString("Framerate: " + toString(getAverageFps()), vec2(10, 10), Color::white(), mFont);
 	
 	mFps = toString(getAverageFps());
-
+	//mFps = toString(ci::app::AppBase::getFrameRate());
 	if (this->mShowGrid && this->mGridLoop)
 		mGridLoop->draw();
 
@@ -321,27 +314,6 @@ void Vis2App::draw()
 	if (mPhongShader)
 	{
 
-
-		/*
-
-		uniform int			uNumCuts;
-		uniform booleanCut	uCutArray[10];
-		uniform sampler2D	uTex0;
-		uniform int			uTexturingMode;
-		uniform ivec2       uFreq;
-		uniform int			uLightAll;
-		uniform vec4		uSpaceParams;
-		uniform vec4		uSpacePos;
-		uniform float		uCutAlpha;
-		uniform bool		uBackfaceCulling;
-
-
-		uniform int			uNumCuts;
-		uniform booleanCut	uCutArray[10];
-		uniform vec4		uSpaceParams;
-
-		*/
-
 		//test for simple uvw parameter space
 		mPhongShader->uniform("uSpaceParams",
 			vec4(mSpaceParamU, mSpaceParamV, mSpaceParamW, 1.0f));
@@ -356,6 +328,9 @@ void Vis2App::draw()
 		mPhongShader->uniform("uBackfaceCulling", mEnableFaceCulling);
 		mPhongShader->uniform("uCutMode", int(mCutType));
 		mPhongShader->uniform("uCutEnable", mCutEnabled);
+
+		mPhongShader->uniform("uRenderEdges", true);
+
 
 		auto size = cutsLabelList.size();
 
@@ -458,7 +433,8 @@ void Vis2App::draw()
 	
 }
 
-
+/**<summary> Creates reference to draw gridloop</summary>
+*/
 void vis2::Vis2App::createGridLoop()
 {
 	mGridLoop = gl::VertBatch::create(GL_LINE_LOOP);
@@ -520,18 +496,15 @@ void vis2::Vis2App::createGrid()
 	this->mVecVertBatchRef.push_back(mGrid);
 }
 
-void vis2::Vis2App::saveCurrentCutAndView()
-{
 
-}
-
-
-
+/**
+<summary> This macro is the main entry point </summary>
+*/
 CINDER_APP(Vis2App, RendererGl , [&](App::Settings *settings) {
 	
 	
 	//settings->setFullScreen(true);
-	//settings->disableFrameRate();
+	settings->disableFrameRate();
 	settings->setWindowSize(1366,768);
 	
 	vector<string> args = settings->getCommandLineArgs();
@@ -550,6 +523,17 @@ CINDER_APP(Vis2App, RendererGl , [&](App::Settings *settings) {
 //User input
 ////////////
 
+/**
+<summary> Keyboard Input handling
+
+enabled keys: 
+
+	c - enables picking cut position
+	d - resets uvw to 1.0
+	ESC - cancel picking or quit application
+
+	</summary>
+*/
 void vis2::Vis2App::keyDown(KeyEvent event)
 {
 	switch (event.getCode())
@@ -594,11 +578,20 @@ void vis2::Vis2App::keyDown(KeyEvent event)
 	}
 }
 
+/**
+<summary>Tracks mousposition for picking feature</summary>
+*/
 void Vis2App::mouseMove(MouseEvent event)
 {
 	this->mMousePos = event.getPos();
 }
 
+/**
+<summary>Tracks mouseclicks:
+
+	Moves the camera along a centred ball and enables drag and drop setting for uvw parameters
+	</summary>
+*/
 void Vis2App::mouseDown(MouseEvent event)
 {
 	this->mMousePos = event.getPos();
@@ -615,6 +608,13 @@ void Vis2App::mouseDown(MouseEvent event)
 	}
 
 	mMouseDown = true;
+
+	int err = gl::getError();
+	if (err != GL_NO_ERROR)
+	{
+		CI_LOG_E(gl::getErrorString(err));
+
+	}
 
 	/*
 	auto ray = mCamera.generateRay(event.getPos(), getWindowSize());
@@ -651,15 +651,13 @@ void Vis2App::mouseDown(MouseEvent event)
 
 	}
 	*/
-	int err = gl::getError();
-	if (err != GL_NO_ERROR)
-	{
-		CI_LOG_E(gl::getErrorString(err));
-
-	}
+	
 }
 
 
+/**
+<summary>Tracks MouseUp: terminates uvw drag and drop </summary>
+*/
 void vis2::Vis2App::mouseUp(MouseEvent event)
 {
 	this->mMousePos = event.getPos();
@@ -668,12 +666,19 @@ void vis2::Vis2App::mouseUp(MouseEvent event)
 }
 
 
+/**
+<summary>Tracks MouseWheel event: Scene zooming and camera pan on mouse3</summary>
+*/
 void Vis2App::mouseWheel(MouseEvent event)
 {
 	this->mMousePos = event.getPos();
 	mCamUi.mouseWheel(event);
 }
 
+
+/**
+<summary>Tracks MouseDrag event: move camera and drag and drop mechanism for basic 4sided window cut</summary>
+*/
 void Vis2App::mouseDrag(MouseEvent event)
 {
 	this->mMousePos = event.getPos();
@@ -688,3 +693,29 @@ void Vis2App::mouseDrag(MouseEvent event)
 	}
 	
 }
+
+
+
+
+
+/*
+void vis2::Vis2App::saveCurrentCutAndView()
+{
+
+}
+*/
+
+/*
+
+bool Vis2App::testPlaneCut(gl::BatchRef batchRef )
+{
+return (mEnablePlaneCut ? true : false);
+if (!mEnablePlaneCut)
+return true;
+
+return false;
+VboMeshRef mesh batchRef->getVboMesh();
+
+}
+
+*/

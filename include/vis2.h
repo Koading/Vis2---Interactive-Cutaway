@@ -82,6 +82,30 @@ namespace vis2 {
 		void keyDown(KeyEvent event) override;
 		void mouseMove(MouseEvent event) override;
 
+		void resetCam();
+		void moveCameraPosLinear(CameraPersp newCam);
+
+
+		void loadObj(const DataSourceRef& dataSource);
+		void loadObj(const DataSourceRef &dataSourceObj, const DataSourceRef &dataSourceMtl);
+
+		void createCut();
+		void loadCut();
+
+		void updateViewInterface() const;
+
+		void createGridLoop();
+		void createGrid();
+
+		void selectObjFileDialog();
+		void loadModel();
+
+		bool performPicking(vec3 *pickedPoint, vec3 *pickedNormal) const;
+
+		void enableSelect();
+		void buttonLoadModel();
+
+
 		vec3				mCameraTarget, mCameraLerpTarget, mCameraViewDirection;
 
 		//for multiple meshes/objects to render
@@ -91,8 +115,6 @@ namespace vis2 {
 		gl::VertBatchRef	mObjectVertBatch;
 		gl::BatchRef		mObjectBatch;
 
-
-
 		CameraPersp			mCamera;
 		CameraUi			mCamUi;
 	
@@ -101,18 +123,10 @@ namespace vis2 {
 		gl::BatchRef		mPrimitiveWireframe;
 		gl::BatchRef		mPrimitiveNormalLines, mPrimitiveTangentLines;
 
-		
-
 		gl::GlslProgRef		mPhongShader;
 		gl::GlslProgRef		mWireShader;
 		gl::GlslProgRef		mWireframeShader;
-
 		gl::GlslProgRef		*mCurrentShader;
-
-		void loadObj(const DataSourceRef& dataSource);
-		void loadObj(const DataSourceRef &dataSourceObj, const DataSourceRef &dataSourceMtl);
-		
-		
 		gl::GlslProgRef		mFlatShader;
 
 		enum shaderSetting
@@ -148,9 +162,7 @@ namespace vis2 {
 		vector<sCut>	cutsList;
 
 
-		void createCut();
-		void loadCut();
-
+		
 
 		//UI Windows
 		params::InterfaceGlRef	mOptions;
@@ -160,7 +172,6 @@ namespace vis2 {
 		
 		params::InterfaceGlRef  mRigs;
 
-		void updateViewInterface() const;
 		
 		shaderSetting mShaderSetting;
 
@@ -175,16 +186,14 @@ namespace vis2 {
 
 		//simple test cut methods:
 		vec4 mPlaneCutParams;
-		bool testPlaneCut(gl::BatchRef batchRef);
-
+		
 		vec3 mPickedPoint;
 		vec3 mPickedNormal;
 
 		vec3 mMouseDrawPoint;
 		vec3 mMouseDrawPickedNormal;
 
-		void enableSelect();
-
+		
 		float mSpaceParamU;
 		float mSpaceParamV;
 		float mSpaceParamW;
@@ -198,43 +207,32 @@ namespace vis2 {
 		float mCutAlpha; 
 
 		bool mEnableSelect;
-		bool performPicking(vec3 *pickedPoint, vec3 *pickedNormal);
 		vec2 mMousePos;
 
 		string mCurrentModelPath;
-		void selectObjFileDialog();
-		void loadModel();
 		
 		Color mBackgroundColor;
 
 		bool mEnableFaceCulling;
 		bool mShowGrid;
 
-		void buttonLoadModel();
-		
 		std::string mModelFile;
 		std::string mModelMtl;
 		std::string mJsonFile;
 
-		void saveToJson();
-		void loadJson();
 
 		JsonTree mJsonTree;
 
 		gl::VertBatchRef mGridLoop;
-		void createGridLoop();
-		
 		gl::VertBatchRef mGrid;
-		void createGrid();
 
+		
 		TexType mTextureType;
 		cutType mCutType;
 		
-		void saveCurrentCutAndView();
 
-		void resetCam();
-		void moveCameraPosLinear(CameraPersp newCam);
-
+		
+		
 		bool	mMouseDown;
 		Font	mFont;
 
@@ -245,6 +243,16 @@ namespace vis2 {
 
 		TriMesh			mCutWire;
 		gl::BatchRef	mCutWireBatch;
+
+		AxisAlignedBox	mObjectBounds;
+		/*		
+
+		void saveCurrentCutAndView();
+		bool testPlaneCut(gl::BatchRef batchRef);
+		void saveToJson();
+		void loadJson();
+
+		*/
 
 	};
 }
