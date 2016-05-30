@@ -11,8 +11,8 @@ uniform int			uNumCuts;
 uniform booleanCut	uCutArray[5];
 
 
-uniform vec3		uCutCenter[5];
-uniform vec3		uCutUVW[5];
+uniform vec4		uCutCenter[5];
+uniform vec4		uCutUVW[5];
 uniform int			uCutType[5];
 uniform bool		uCutEnabled[5];
 uniform float		uCutAlphas[5];
@@ -137,13 +137,13 @@ bool ballCut(vec4 p, vec4 ballPos, vec4 ballDims)
 	
 }
 
-bool cut(vec4 point, vec4 cutPos, vec4 uvw)
+bool cut(vec4 point, vec4 cutPos, vec4 uvw, int type)
 {
-	if (uCutMode == 3)
+	if (type == 3)
 		return planeCut(point, cutPos, uvw);
-	if(uCutMode == 1)
+	if(type == 1)
 		return boxCut(point, cutPos, uvw);
-	else if (uCutMode == 2)
+	else if (type == 2)
 		return ballCut(point, cutPos, uvw);
 	else return false;
 }
@@ -154,7 +154,9 @@ void main()
 	float alpha = 1.0;
 	bool isCut = false;
 
-	if( uCutEnable && cut(vVertexIn.realPosition, uSpacePos, uSpaceParams ))
+
+	//current cut
+	if( uCutEnable && cut(vVertexIn.realPosition, uSpacePos, uSpaceParams, uCutMode))
 	{
 		if(uCutAlpha == 0.0f)
 			discard;
@@ -162,6 +164,21 @@ void main()
 			//alpha = uCutAlpha;
 
 		isCut = true;
+	}
+
+	for(int i = 0; i < 5; i++)
+	{
+		if(i < uNumCuts)
+		{
+			if( uCutEnabled[i] && cut(vVertexIn.realPosition, uCutCenter[i], uCutUVW[i], uCutType[i]))
+			{
+				if(uCutAlphas[i] == 0.0f)
+					discard;
+
+				isCut = true;
+				break;
+			}
+		}
 	}
 
 	// set diffuse and specular colors

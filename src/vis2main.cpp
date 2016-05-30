@@ -364,18 +364,18 @@ void Vis2App::draw()
 		mPhongShader->uniform("uNumCuts", int(size));
 
 		//vec3 *cutCenter = new vec3[size];
-		vector<vec3> cutCenter;
-		vector<vec3> cutUVW;
+		vector<vec4> cutCenter;
+		vector<vec4> cutUVW;
 		vector<int>  cutType;
-		vector<bool> cutEnabled;
+		vector<int> cutEnabled;
 		vector<float> cutAlpha;
 
 		while (it != cutsLabelList.end())
 		{
 			sCut cut = cutsList.at(it - cutsLabelList.begin());
 
-			vec3 v3Pos = vec3(cut.x, cut.y, cut.z);
-			vec3 v3UVW = vec3(cut.u, cut.v, cut.w);
+			vec4 v3Pos = vec4(cut.x, cut.y, cut.z, 1.0f);
+			vec4 v3UVW = vec4(cut.u, cut.v, cut.w, 1.0f);
 			
 			cutCenter.push_back(v3Pos);
 			cutUVW.push_back(v3UVW);
@@ -386,11 +386,11 @@ void Vis2App::draw()
 			++it;
 		}
 
-		mPhongShader->uniform("uCutCenter",		(&cutCenter));
-		mPhongShader->uniform("uCutUVW",		(&cutUVW));
-		mPhongShader->uniform("uCutType",		(&cutType));
-		mPhongShader->uniform("uCutEnabled",	(&cutEnabled));
-		mPhongShader->uniform("uCutAlphas",		(&cutAlpha));
+		mPhongShader->uniform("uCutCenter",		&cutCenter[0], size);
+		mPhongShader->uniform("uCutUVW",		&cutUVW[0], size);
+		mPhongShader->uniform("uCutType",		&cutType[0], size);
+		mPhongShader->uniform("uCutEnabled",	(&cutEnabled[0]),size);
+		mPhongShader->uniform("uCutAlphas",		(&cutAlpha[0]), size );
 		//structs as uniform?
 		
 	}
