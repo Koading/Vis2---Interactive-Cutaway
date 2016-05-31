@@ -1,10 +1,9 @@
 #include "vis2.h"
 
-using namespace vis2;
+//using namespace vis2;
 using namespace ci;
 
-
-
+namespace vis2{
 /**
 <summary>User Interface
 
@@ -36,10 +35,15 @@ void Vis2App::setupUI()
 	mCutSettings->addSeparator();
 	
 	mCutSettings->addParam("Cut Mode", vecCutTypes, reinterpret_cast<int*>(&mCutType));
-
+	/*
 	mCutSettings->addParam("U", &mSpaceParamU).min(0.0f).step(0.1f);
 	mCutSettings->addParam("V", &mSpaceParamV).min(0.0f).step(0.1f);
 	mCutSettings->addParam("W", &mSpaceParamW).min(0.0f).step(0.1f);
+	*/
+
+	mCutSettings->addParam("U", &mSpaceParamU).step(0.1f);
+	mCutSettings->addParam("V", &mSpaceParamV).step(0.1f);
+	mCutSettings->addParam("W", &mSpaceParamW).step(0.1f);
 
 	mCutSettings->addParam("PosX", &mSpaceX).step(0.1f);
 	mCutSettings->addParam("PosY", &mSpaceY).step(0.1f);
@@ -198,4 +202,5 @@ bool Vis2App::performPicking(vec3 *pickedPoint, vec3 *pickedNormal) const
 	}
 	else
 		return false;
+}
 }

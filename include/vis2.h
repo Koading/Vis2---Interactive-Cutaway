@@ -63,7 +63,6 @@ namespace vis2 {
 	public:
 		Vis2App();
 
-
 		void setup() override;
 		void setupUI();
 		void setupLabelList();
@@ -105,7 +104,7 @@ namespace vis2 {
 		void enableSelect();
 		void buttonLoadModel();
 
-
+	protected:
 		vec3				mCameraTarget, mCameraLerpTarget, mCameraViewDirection;
 
 		//for multiple meshes/objects to render

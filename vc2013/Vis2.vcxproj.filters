@@ -33,9 +33,6 @@
     <ClInclude Include="..\include\vis2enums.h">
       <Filter>Source Files\src</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\vis2Input.cpp">
-      <Filter>Source Files\src</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\include\Resources.h">
