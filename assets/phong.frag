@@ -8,14 +8,14 @@ struct booleanCut
 };
 
 uniform int			uNumCuts;
-uniform booleanCut	uCutArray[5];
+uniform booleanCut	uCutArray[10];
 
 
-uniform vec4		uCutCenter[5];
-uniform vec4		uCutUVW[5];
-uniform int			uCutType[5];
-uniform bool		uCutEnabled[5];
-uniform float		uCutAlphas[5];
+uniform vec4		uCutCenter[10];
+uniform vec4		uCutUVW[10];
+uniform int			uCutType[10];
+uniform bool		uCutEnabled[10];
+uniform float		uCutAlphas[10];
 
 uniform sampler2D	uTex0;
 uniform int			uTexturingMode;
